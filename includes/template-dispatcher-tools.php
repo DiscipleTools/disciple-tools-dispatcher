@@ -67,11 +67,16 @@ $dt_url_path = dt_get_url_path();
                                 <td><?php echo esc_html( $user["user_status"] ) ?></td>
                                 <td><?php echo esc_html( $user["number_new_assigned"] ) ?></td>
                                 <td>
-                                    <img src="<?php echo esc_html( get_template_directory_uri() . '/dt-assets/images/broken.svg' )?>" />
+                                    <?php if ( $user["number_update"] > 5 ) : ?>
+                                        <img src="<?php echo esc_html( get_template_directory_uri() . '/dt-assets/images/broken.svg' )?>" />
+                                    <?php endif; ?>
                                     <?php echo esc_html( $user["number_update"] ) ?>
                                 </td>
                                 <td><?php echo esc_html( $user["number_active"] ) ?></td>
                                 <td data-sort="<?php echo esc_html( $user["last_activity"] ?? "" ) ?>">
+                                    <?php if ( $user["last_activity"] < time() - 60 * 60 * 24 * 90 ) : ?>
+                                        <img src="<?php echo esc_html( get_template_directory_uri() . '/dt-assets/images/broken.svg' )?>" />
+                                    <?php endif; ?>
                                     <?php echo esc_html( dt_format_date( $user["last_activity"] ?? "" ) ) ?>
                                 </td>
                             </tr>
@@ -92,12 +97,47 @@ $dt_url_path = dt_get_url_path();
         <div class="full reveal" id="user_modal" data-reveal style="background-color: #e2e2e2">
             <span style="display: inline-block" class="loading-spinner users-spinner"></span>
             <div id="user_modal_content">
+
                 <h1 id="user_name" style="display: inline-block"><?php esc_html_e( "Multiplier name", 'disciple_tools' ) ?></h1>
+                <button class="button" data-close aria-label="Close reveal" type="button" style="margin-left:30px">
+                    <span aria-hidden="true">Return to list</span>
+                </button>
 
                 <button class="close-button" data-close aria-label="Close reveal" type="button">
                     <span aria-hidden="true">&times;</span>
                 </button>
 
+                <hr>
+
+                <div style="display: flex; justify-content: flex-start" id="hero_stats">
+
+                    <div class="bordered-box">
+                        <div class="section-subheader">
+                            <?php esc_html_e( 'Update Needed', 'disciple_tools' )?>
+                        </div>
+                        <p style="text-align: center" id="update_needed_count"></p>
+                    </div>
+
+                    <div class="bordered-box">
+                        <div class="section-subheader">
+                            <?php esc_html_e( 'Pending', 'disciple_tools' )?>
+                        </div>
+                        <p style="text-align: center" id="needs_accepted_count"></p>
+                    </div>
+                    <div class="bordered-box">
+                        <div class="section-subheader">
+                            <?php esc_html_e( 'Active Contacts', 'disciple_tools' )?>
+                        </div>
+                        <p style="text-align: center" id="active_contacts"></p>
+                    </div>
+                    <div class="bordered-box">
+                        <div class="section-subheader">
+                            <?php esc_html_e( 'Unread notifications', 'disciple_tools' )?>
+                        </div>
+                        <p style="text-align: center" id="unread_notifications"></p>
+                    </div>
+
+                </div>
 
                 <div style="display: flex; justify-content: space-between">
 
@@ -106,9 +146,11 @@ $dt_url_path = dt_get_url_path();
                             <h3>Status</h3>
                             <select id="status-select" class="user-select">
                                 <option></option>
+                                <option value="new">New</option>
                                 <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
                                 <option value="away">Away</option>
+                                <option value="away">Fading</option>
+                                <option value="inactive">Inactive</option>
                             </select>
                         </div>
                         <div class="bordered-box">
@@ -169,6 +211,8 @@ $dt_url_path = dt_get_url_path();
                         </div>
                         <div class="bordered-box">
                         <h3>Stats</h3>
+                        <div class="subheader">Daily Activity</div>
+                        <div id="day_activity_chart" style="height: 300px"></div>
                         </div>
                     </div>
                     <div style="flex-basis: 50%; padding-left: 10px" class="user_modal_column">

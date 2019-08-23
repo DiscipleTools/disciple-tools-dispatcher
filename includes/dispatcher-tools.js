@@ -70,13 +70,20 @@ jQuery(document).ready(function($) {
       display_dates_unavailable( response.dates_unavailable )
 
       //stats
+      $('#update_needed_count').html(response.update_needed["total"])
+      $('#needs_accepted_count').html(response.needs_accepted["total"])
+      $('#active_contacts').html(response.active_contacts)
+      $('#unread_notifications').html(response.unread_notifications)
+      day_activity_chart(response.days_active)
 
       //Activity history
       let activity_div = $('#activity')
       let activity_html = ``;
       response.user_activity.forEach((a)=>{
-        // activity_html += `<div>${moment.unix(a.hist_time).format('YYYY-MM-DD')} ${a.object_note}</div>`
-        activity_html += `<div>${a.hist_time} ${a.object_note}</div>`
+        activity_html += `<div>
+          <strong>${moment.unix(a.hist_time).format('YYYY-MM-DD')}</strong>
+          ${a.object_note}
+        </div>`
       })
       activity_div.html(activity_html)
 
@@ -236,4 +243,53 @@ jQuery(document).ready(function($) {
     });
   }
 
+  let day_activity_chart = (days_active)=>{
+    am4core.ready(function() {
+
+      am4core.useTheme(am4themes_animated);
+
+      var chart = am4core.create("day_activity_chart", am4charts.XYChart);
+      chart.maskBullets = false;
+
+      var xAxis = chart.xAxes.push(new am4charts.CategoryAxis());
+      var yAxis = chart.yAxes.push(new am4charts.CategoryAxis());
+
+      xAxis.dataFields.category = "week_start";
+      yAxis.dataFields.category = "weekday";
+
+      // xAxis.renderer.grid.template.disabled = true;
+      xAxis.renderer.minGridDistance = 100;
+
+      // yAxis.renderer.grid.template.disabled = true;
+      yAxis.renderer.inversed = true;
+      yAxis.renderer.minGridDistance = 10;
+
+      var series = chart.series.push(new am4charts.ColumnSeries());
+      series.dataFields.categoryY = "weekday";
+      series.dataFields.categoryX = "week_start";
+      series.dataFields.value = "activity";
+      series.sequencedInterpolation = true;
+      series.defaultState.transitionDuration = 3000;
+
+      var bgColor = new am4core.InterfaceColorSet().getFor("background");
+
+      var columnTemplate = series.columns.template;
+      columnTemplate.strokeWidth = 1;
+      columnTemplate.strokeOpacity = 0.2;
+      // columnTemplate.stroke = bgColor;
+      columnTemplate.tooltipText = "{weekday}, {day}: {activity_count}";
+      columnTemplate.width = am4core.percent(100);
+      columnTemplate.height = am4core.percent(100);
+
+      series.heatRules.push({
+        target: columnTemplate,
+        property: "fill",
+        // min: am4core.color('#deeff8'),
+        min: am4core.color(bgColor),
+        max: chart.colors.getIndex(0)
+      });
+
+      chart.data = days_active
+      });
+  }
 })

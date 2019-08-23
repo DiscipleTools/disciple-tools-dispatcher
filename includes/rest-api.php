@@ -122,6 +122,74 @@ class DT_Dispatcher_Tools_Endpoints
 
         $test = "";
 
+        $to_accept = Disciple_Tools_Contacts::search_viewable_contacts( [
+            'overall_status' => [ 'assigned' ],
+            'assigned_to'    => [ 'me' ]
+        ] );
+        $update_needed = Disciple_Tools_Contacts::search_viewable_contacts( [
+            'requires_update' => [ "true" ],
+            'assigned_to'     => [ 'me' ],
+            'overall_status' => [ '-closed' ]
+        ] );
+        if ( sizeof( $update_needed["contacts"] ) > 5 ) {
+            $update_needed["contacts"] = array_slice( $update_needed["contacts"], 0, 5 );
+        }
+        if ( sizeof( $to_accept["contacts"] ) > 5 ) {
+            $to_accept["contacts"] = array_slice( $to_accept["contacts"], 0, 5 );
+        }
+        foreach ( $update_needed["contacts"] as &$contact ){
+            $now = time();
+            $last_modified = get_post_meta( $contact->ID, "last_modified", true );
+            $days_different = (int) round( ( $now - (int) $last_modified ) / ( 60 * 60 * 24 ) );
+            $contact->last_modified_msg = esc_attr( sprintf( __( '%s days since last update', 'disciple_tools' ), $days_different ), 'disciple_tools' );
+        }
+        $my_active_contacts = self::count_active_contacts();
+        $notification_count = $wpdb->get_var( $wpdb->prepare(
+            "SELECT count(id)
+            FROM `$wpdb->dt_notifications`
+            WHERE
+                user_id = %d
+                AND is_new = '1'",
+            $user->ID
+        ) );
+
+        $days_active_results = $wpdb->get_results( $wpdb->prepare( "
+            SELECT FROM_UNIXTIME(`hist_time`, '%%Y-%%m-%%d') as day,
+            count(histid) as activity_count
+            FROM wp_dt_activity_log 
+            WHERE user_id = %s 
+            group by day 
+            ORDER BY `day` ASC",
+            $user->ID
+        ), ARRAY_A);
+        $days_active = [];
+        foreach ( $days_active_results as $a ){
+            $days_active[$a["day"]] = $a;
+//            $time = strtotime( $a['day'] );
+//            $a["weekday"] = date( 'l', $time );
+//            $day = date( 'w', $time );
+//            $week_start = date( 'Y-m-d', strtotime( '-' . $day . ' days', $time ) );
+//            $a["week_start"] = $week_start;
+        }
+        $first = strtotime( $days_active_results[0]['day'] );
+        $first_week_start = date( 'Y-m-d', strtotime( '-' . date( 'w', $first )  . ' days', $first ) );
+        $current = strtotime( $first_week_start );
+        $daily_activity = [];
+        while ( $current < time() ) {
+
+            $activity = $days_active[date( 'Y-m-d', $current )]["activity_count"] ?? 0;
+
+            $daily_activity[] = [
+                "day" => dt_format_date( $current ),
+                "weekday" => date( 'l', $current ),
+                "week_start" => date( 'Y-m-d', strtotime( '-' . date( 'w', $current ) . ' days', $current ) ),
+                "activity_count" => $activity,
+                "activity" => $activity > 0 ? 1 : 0
+            ];
+
+
+            $current += 24 * 60 * 60;
+        }
 
         return [
             "display_name" => $user->display_name,
@@ -129,17 +197,40 @@ class DT_Dispatcher_Tools_Endpoints
             "locations" => $locations,
             "dates_unavailable" => $dates_unavailable ? $dates_unavailable : [],
             "user_activity" => $user_activity,
-
-            "active_contacts" => 15,
-            "update_needed_count" => 5,
-            "update_needed" => [ 100, 1001 ],
-            "needs_accepted_count" => 1,
-            "needs_accepted" => [ 100 ],
-            "times_to_accept" => [ 132, 320939, 390484, 39039 ],
-            "times_to_contact_attempt" => [ 23, 39032, 4093, 33333 ]
+            "active_contacts" => $my_active_contacts,
+            "update_needed" => $update_needed,
+            "unread_notifications" => $notification_count ? $notification_count : 0,
+            "needs_accepted" => $to_accept,
+            "days_active" => $daily_activity
+//            "times_to_accept" => [ 132, 320939, 390484, 39039 ],
+//            "times_to_contact_attempt" => [ 23, 39032, 4093, 33333 ]
         ];
 
 
+    }
+
+    private static function count_active_contacts(){
+        global $wpdb;
+        $my_active_contacts = $wpdb->get_var( $wpdb->prepare( "
+            SELECT count(a.ID)
+              FROM $wpdb->posts as a
+              INNER JOIN $wpdb->postmeta as assigned_to
+                ON a.ID=assigned_to.post_id
+                  AND assigned_to.meta_key = 'assigned_to'
+                  AND assigned_to.meta_value = CONCAT( 'user-', %s )
+                JOIN $wpdb->postmeta as b
+                  ON a.ID=b.post_id
+                     AND b.meta_key = 'overall_status'
+                         AND b.meta_value = 'active'
+                INNER JOIN $wpdb->postmeta as e
+                  ON a.ID=e.post_id
+                     AND (( e.meta_key = 'type'
+                            AND ( e.meta_value = 'media' OR e.meta_value = 'next_gen' ) )
+                          OR e.meta_key IS NULL)
+              WHERE a.post_status = 'publish'
+              AND post_type = 'contacts'
+              ", get_current_user_id() ) );
+        return $my_active_contacts;
     }
 
     public static function get_users() {
