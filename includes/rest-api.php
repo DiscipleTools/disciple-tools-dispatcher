@@ -248,14 +248,14 @@ class DT_Dispatcher_Tools_Endpoints
                 count(new_assigned.post_id) as number_new_assigned,
                 count(update_needed.post_id) as number_update
             from $wpdb->users as users
-            INNER JOIN $wpdb->usermeta as um on ( um.user_id = users.ID AND um.meta_key = 'wp_capabilities' AND um.meta_value LIKE '%multiplier%' )
+            INNER JOIN $wpdb->usermeta as um on ( um.user_id = users.ID AND um.meta_key = 'wp_capabilities' AND um.meta_value LIKE %s )
             LEFT JOIN $wpdb->usermeta as um1 on ( um1.user_id = users.ID AND um1.meta_key = %s )
             INNER JOIN $wpdb->postmeta as pm on (pm.meta_key = 'assigned_to' and pm.meta_value = CONCAT( 'user-', users.ID ) )
             INNER JOIN $wpdb->postmeta as type on (type.post_id = pm.post_id and type.meta_key = 'type' and ( type.meta_value = 'media' OR type.meta_value = 'next_gen' ) )
             LEFT JOIN $wpdb->postmeta as active on (active.post_id = pm.post_id and active.meta_key = 'overall_status' and active.meta_value = 'active' )
             LEFT JOIN $wpdb->postmeta as new_assigned on (new_assigned.post_id = pm.post_id and new_assigned.meta_key = 'overall_status' and new_assigned.meta_value = 'assigned' )
             LEFT JOIN $wpdb->postmeta as update_needed on (update_needed.post_id = pm.post_id and update_needed.meta_key = 'requires_update' and update_needed.meta_value = '1' )
-            GROUP by users.ID", $wpdb->prefix . 'user_status' ),
+            GROUP by users.ID", '%multiplier%', $wpdb->prefix . 'user_status' ),
         ARRAY_A );
 
         $users = [];
@@ -336,8 +336,131 @@ class DT_Dispatcher_Tools_Endpoints
                 return $dates_unavailable;
             }
         }
+    }
+
+    public static function get_dash_stats(){
+        $stats = self::query_project_hero_stats();
+        $multipliers = self::get_users();
+        $multipliers_stats = [
+            "status" => []
+        ];
+        foreach ( $multipliers as $m ) {
+            if ( !isset( $multipliers_stats["status"][$m["user_status"]] ) ){
+                $multipliers_stats["status"][$m["user_status"]] = 0;
+            }
+            $multipliers_stats["status"][ $m["user_status"] ] += 1;
+        }
+        $results = [
+            'total_contacts' => $stats["total_contacts"],
+            'active_contacts' => $stats['active_contacts'],
+            'needs_accepted' => $stats['needs_accept'],
+            'updates_needed' => $stats['needs_update'],
+            'multiplier_stats' => $multipliers_stats
+        ];
+        return $results;
+    }
+    public static function query_project_hero_stats() {
+        global $wpdb;
+
+        $numbers = [];
+        $numbers["total_contacts"] = Disciple_Tools_Counter::critical_path( 'new_contacts' );
 
 
+        $results = $wpdb->get_results( "
+            SELECT (
+                SELECT count(a.ID)
+                FROM $wpdb->posts as a
+                JOIN $wpdb->postmeta as b
+                ON a.ID = b.post_id
+                AND b.meta_key = 'overall_status'
+                AND b.meta_value = 'active'
+                WHERE a.post_status = 'publish'
+                AND a.post_type = 'contacts'
+                AND a.ID NOT IN (
+                SELECT bb.post_id
+                FROM $wpdb->postmeta as bb
+                WHERE meta_key = 'corresponds_to_user'
+                AND meta_value != 0
+                GROUP BY bb.post_id )
+                )
+            as active_contacts,
+            (SELECT count(a.ID)
+                FROM $wpdb->posts as a
+                    JOIN $wpdb->postmeta as b
+                    ON a.ID=b.post_id
+                       AND b.meta_key = 'accepted'
+                       AND b.meta_value = ''
+               JOIN $wpdb->postmeta as d
+               ON a.ID=d.post_id
+                   AND d.meta_key = 'overall_status'
+                   AND d.meta_value = 'assigned'
+               WHERE a.post_status = 'publish'
+               AND a.post_type = 'contacts'
+               AND a.ID NOT IN (
+                   SELECT post_id
+                   FROM $wpdb->postmeta
+                   WHERE meta_key = 'corresponds_to_user'
+                   AND meta_value != 0
+                   GROUP BY post_id
+                ))
+            as needs_accept,
+            (SELECT count(a.ID)
+                FROM $wpdb->posts as a
+                    JOIN $wpdb->postmeta as b
+                    ON a.ID=b.post_id
+                       AND b.meta_key = 'requires_update'
+                       AND b.meta_value = '1'
+               JOIN $wpdb->postmeta as d
+               ON a.ID=d.post_id
+                      AND d.meta_key = 'overall_status'
+               AND d.meta_value = 'active'
+               WHERE a.post_status = 'publish'
+                AND a.post_type = 'contacts'
+                AND a.ID NOT IN (
+                    SELECT post_id
+                    FROM $wpdb->postmeta
+                    WHERE meta_key = 'corresponds_to_user'
+                      AND meta_value != 0
+                    GROUP BY post_id
+                ))
+            as needs_update,
+            (SELECT count(a.ID)
+                FROM $wpdb->posts as a
+                JOIN $wpdb->postmeta as d
+                ON a.ID=d.post_id
+                    AND d.meta_key = 'group_status'
+                AND d.meta_value = 'active'
+                JOIN $wpdb->postmeta as e
+                  ON a.ID=e.post_id
+                     AND e.meta_key = 'group_type'
+                     AND e.meta_value != 'team'
+                WHERE a.post_status = 'publish'
+                AND a.post_type = 'groups')
+            as `groups`,
+            (SELECT count(a.ID)
+                FROM $wpdb->posts as a
+                JOIN $wpdb->postmeta as d
+                ON a.ID=d.post_id
+                    AND d.meta_key = 'group_status'
+                AND d.meta_value = 'active'
+                JOIN $wpdb->postmeta as e
+                  ON a.ID=e.post_id
+                     AND e.meta_key = 'group_type'
+                     AND e.meta_value = 'team'
+                WHERE a.post_status = 'publish'
+                AND a.post_type = 'groups')
+            as `teams`
+        ", ARRAY_A );
+
+        if ( empty( $results ) ) {
+            return new WP_Error( __METHOD__, 'No results from the personal count query' );
+        }
+
+        foreach ( $results[0] as $key => $value ) {
+            $numbers[$key] = $value;
+        }
+
+        return $numbers;
     }
 
 }

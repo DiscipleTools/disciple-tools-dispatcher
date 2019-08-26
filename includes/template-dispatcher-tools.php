@@ -1,6 +1,6 @@
 <?php
 /*
-Template Name: Metrics
+Template Name: Dispatcher tools
 */
 if ( ! current_user_can( 'access_contacts' ) ) {
     wp_safe_redirect( '/settings' );
@@ -45,7 +45,7 @@ $dt_url_path = dt_get_url_path();
                 <div class="bordered-box">
 
                     <div id="chart">
-                    <?php if ( $dt_url_path === 'dispatcher-tools/multipliers' ) :
+                    <?php if ( strpos( $dt_url_path, 'dispatcher-tools/multipliers' ) !== false ) :
                         $users = DT_Dispatcher_Tools_Endpoints::get_users(); ?>
                         <h3>Multipliers</h3>
                         <div style="display: inline-block" class="loading-spinner users-spinner"></div>
@@ -63,7 +63,7 @@ $dt_url_path = dt_get_url_path();
                             <tbody>
                             <?php foreach ( $users as $user_i => $user ) : ?>
                             <tr class="user_row" style="cursor: pointer"data-user="<?php echo esc_html( $user["ID"] ) ?>">
-                                <td><?php echo esc_html( $user["display_name"] ) ?></td>
+                                <td data-user="<?php echo esc_html( $user["ID"] ) ?>"><?php echo esc_html( $user["display_name"] ) ?></td>
                                 <td><?php echo esc_html( $user["user_status"] ) ?></td>
                                 <td><?php echo esc_html( $user["number_new_assigned"] ) ?></td>
                                 <td>
@@ -84,6 +84,60 @@ $dt_url_path = dt_get_url_path();
                             </tbody>
                         </table>
 
+
+                    <?php endif; ?>
+
+
+                    <?php if ( strpos( $dt_url_path, 'dispatcher-tools/dash' ) !== false ) :
+                        $dash_stats = DT_Dispatcher_Tools_Endpoints::get_dash_stats(); ?>
+                        <h3 class="section-header"><?php esc_html_e( "Contacts", 'disciple_tools' ) ?></h3>
+                        <div class="center callout">
+                            <div class="grid-x">
+                                <div class="medium-3 cell center">
+                                    <h5><?php esc_html_e( "Waiting on Accept", 'disciple_tools' ) ?><br>
+                                        <span id="needs_accepted"><?php echo esc_html( $dash_stats["needs_accepted"] ) ?></span>
+                                    </h5>
+                                </div>
+                                <div class="medium-3 cell center left-border-grey">
+                                    <h5><?php esc_html_e( "Waiting On Update", 'disciple_tools' ) ?><br>
+                                        <span id="updates_needed"><?php echo esc_html( $dash_stats["updates_needed"] ) ?></span>
+                                    </h5>
+                                </div>
+                                <div class="medium-3 cell center left-border-grey">
+                                    <h5><?php esc_html_e( "Active  Contacts", 'disciple_tools' ) ?><br>
+                                        <span id="active_contacts"><?php echo esc_html( $dash_stats["active_contacts"] ) ?></span>
+                                    </h5>
+                                </div>
+                                <div class="medium-3 cell center left-border-grey">
+                                    <h5><?php esc_html_e( "All Contacts", 'disciple_tools' ) ?><br>
+                                        <span id="all_contacts"><?php echo esc_html( $dash_stats["total_contacts"] ) ?></span>
+                                    </h5>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h3 class="section-header"><?php esc_html_e( "Multipliers", 'disciple_tools' ) ?></h3>
+                        <a class="button" href="multipliers">See All</a>
+                        <div class="center callout">
+                            <div class="grid-x">
+                                <?php if ( isset( $dash_stats["multiplier_stats"]["status"][""] ) && !empty( $dash_stats["multiplier_stats"]["status"][""] ) ) : ?>
+                                <div class="auto cell center">
+                                    <h5>No Status<br>
+                                        <span id="needs_accepted"><?php echo esc_html( $dash_stats["multiplier_stats"]["status"][""] ) ?></span>
+                                    </h5>
+                                </div>
+                                <?php endif; ?>
+                                <?php foreach ( $dash_stats["multiplier_stats"]["status"] as $status_key => $num ) :
+                                    if ( $status_key && $num ) : ?>
+                                    <div class="cell auto center left-border-grey">
+                                        <h5><?php echo esc_html( $status_key ) ?><br>
+                                            <span id="updates_needed"><?php echo esc_html( $num ) ?></span>
+                                        </h5>
+                                    </div>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
 
                     <?php endif; ?>
                     </div><!-- Container for charts -->

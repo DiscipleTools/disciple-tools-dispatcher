@@ -36,61 +36,73 @@ jQuery(document).ready(function($) {
       } );
   } );
 
-
   let user_id = 0;
-  $('.user_row').on("click", function () {
+  let open_multiplier_modal = (user_id)=>{
     $('#user_modal').foundation('open');
     $('.users-spinner').addClass("active")
-    user_id = $(this).data("user")
     $('#user_modal_content').hide()
     makeRequest( "get", `user?user=${user_id}`, null , 'dispatcher-tools/v1/')
-    .then(response=>{
-      $('#user_modal_content').show()
-      $('.users-spinner').removeClass("active")
-      $("#user_name").html(_.escape(response.display_name))
+      .then(response=>{
+        $('#user_modal_content').show()
+        $('.users-spinner').removeClass("active")
+        $("#user_name").html(_.escape(response.display_name))
 
-      //status
-      $('#status-select').val(response.user_status)
-      if ( response.user_status !== "0" ){
-      }
-
-      //locations
-      let typeahead = Typeahead['.js-typeahead-location_grid']
-      if ( typeahead ){
-        for (let i = 0; i < typeahead.items.length; i ){
-          typeahead.cancelMultiselectItem(0)
+        //status
+        $('#status-select').val(response.user_status)
+        if ( response.user_status !== "0" ){
         }
 
-      }
-      response.locations.forEach( location=>{
-        typeahead.addMultiselectItemLayout({ID:location.grid_id.toString(), name:location.name})
-      })
+        //locations
+        let typeahead = Typeahead['.js-typeahead-location_grid']
+        if ( typeahead ){
+          for (let i = 0; i < typeahead.items.length; i ){
+            typeahead.cancelMultiselectItem(0)
+          }
 
-      //availability
-      display_dates_unavailable( response.dates_unavailable )
+        }
+        response.locations.forEach( location=>{
+          typeahead.addMultiselectItemLayout({ID:location.grid_id.toString(), name:location.name})
+        })
 
-      //stats
-      $('#update_needed_count').html(response.update_needed["total"])
-      $('#needs_accepted_count').html(response.needs_accepted["total"])
-      $('#active_contacts').html(response.active_contacts)
-      $('#unread_notifications').html(response.unread_notifications)
-      day_activity_chart(response.days_active)
+        //availability
+        display_dates_unavailable( response.dates_unavailable )
 
-      //Activity history
-      let activity_div = $('#activity')
-      let activity_html = ``;
-      response.user_activity.forEach((a)=>{
-        activity_html += `<div>
+        //stats
+        $('#update_needed_count').html(response.update_needed["total"])
+        $('#needs_accepted_count').html(response.needs_accepted["total"])
+        $('#active_contacts').html(response.active_contacts)
+        $('#unread_notifications').html(response.unread_notifications)
+        day_activity_chart(response.days_active)
+
+        //Activity history
+        let activity_div = $('#activity')
+        let activity_html = ``;
+        response.user_activity.forEach((a)=>{
+          activity_html += `<div>
           <strong>${moment.unix(a.hist_time).format('YYYY-MM-DD')}</strong>
           ${a.object_note}
         </div>`
+        })
+        activity_div.html(activity_html)
       })
-      activity_div.html(activity_html)
+  }
+  // if ( !isNaN( dtDispatcherTools.url_path.replace('dispatcher-tools/multipliers/', '' ) ) ){
+  //   user_id = dtDispatcherTools.url_path.replace('dispatcher-tools/multipliers/', '' )
+  //   open_multiplier_modal(user_id)
+  // }
 
+  $('.user_row').on("click", function () {
+    user_id = $(this).data("user")
+    // if ( dtDispatcherTools.url_path === 'dispatcher-tools/multipliers' ) {
+    //   location.href = `${location.href}?user-id=${user_id}`
+    // }
+    // let modal_user_list = ''
+    // $('#multipliers_table tbody tr td:nth-child(1)').each(function (cell, a, b) {
+    //   modal_user_list += `<a href="${$(a).data('user')}">${$(a).text()}</a>`
+    // })
+    // $('.sidenav').html(modal_user_list);
 
-
-    })
-
+    open_multiplier_modal(user_id)
   })
 
   let update_user = ( user_id, key, value )=>{

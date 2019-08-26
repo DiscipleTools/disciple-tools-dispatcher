@@ -41,9 +41,9 @@ class DT_Dispatcher_Tools_Functions
         $content .= '<li>
             <a href="'. site_url( '/dispatcher-tools/dash' ) .'" >' .  esc_html__( 'Dash', 'disciple_tools' ) . '</a>
             <a href="'. site_url( '/dispatcher-tools/multipliers' ) .'" >' .  esc_html__( 'Multipliers', 'disciple_tools' ) . '</a>
-            <a href="'. site_url( '/dispatcher-tools/coverage' ) .'" >' .  esc_html__( 'Coverage', 'disciple_tools' ) . '</a>
-            <a href="'. site_url( '/dispatcher-tools/fungus' ) .'" >' .  esc_html__( 'Fungus', 'disciple_tools' ) . '</a>
         </li>';
+//            <a href="'. site_url( '/dispatcher-tools/coverage' ) .'" >' .  esc_html__( 'Coverage', 'disciple_tools' ) . '</a>
+//            <a href="'. site_url( '/dispatcher-tools/fungus' ) .'" >' .  esc_html__( 'Fungus', 'disciple_tools' ) . '</a>
         return $content;
     }
 
@@ -74,7 +74,8 @@ class DT_Dispatcher_Tools_Functions
                 'nonce'              => wp_create_nonce( 'wp_rest' ),
                 'current_user_login' => wp_get_current_user()->user_login,
                 'current_user_id'    => get_current_user_id(),
-                'data'               => []
+                'data'               => [],
+                'url_path'       => dt_get_url_path()
             ]
         );
     }
