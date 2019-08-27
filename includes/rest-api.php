@@ -6,7 +6,7 @@
 
 class DT_Dispatcher_Tools_Endpoints
 {
-    public $permissions = [ 'view_any_contacts' ];
+    public $permissions = [ 'manage_dt' ];
 
     private static $_instance = null;
     public static function instance() {

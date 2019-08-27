@@ -2,7 +2,7 @@
 
 class DT_Dispatcher_Tools_Functions
 {
-    public $permissions = [ 'view_any_contacts' ];
+    public $permissions = [ 'manage_dt' ];
 
     private static $_instance = null;
     public static function instance() {
@@ -64,13 +64,13 @@ class DT_Dispatcher_Tools_Functions
 
     public function scripts() {
 
-        wp_register_style( 'datatable-css', '//cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css' );
+        wp_register_style( 'datatable-css', '//cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css', [], '1.10.19' );
         wp_enqueue_style( 'datatable-css' );
         wp_register_script( 'datatable', '//cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js', false, '1.10' );
         wp_register_script( 'amcharts-core', 'https://www.amcharts.com/lib/4/core.js', false, '4' );
         wp_register_script( 'amcharts-charts', 'https://www.amcharts.com/lib/4/charts.js', false, '4' );
         wp_register_script( 'amcharts-animated', 'https://www.amcharts.com/lib/4/themes/animated.js', false, '4' );
-        wp_enqueue_style( 'dispatcher_tools-css', plugin_dir_url( __FILE__ ) . '/styles.css', array() );
+        wp_enqueue_style( 'dispatcher_tools-css', plugin_dir_url( __FILE__ ) . 'styles.css', array(), filemtime( plugin_dir_path( __FILE__ ) . 'styles.css' ) );
         wp_enqueue_script( 'dt_dispatcher_tools', plugin_dir_url( __FILE__ ) . '/dispatcher-tools.js', [
             'jquery',
             'jquery-ui-core',
