@@ -88,7 +88,7 @@ $dt_url_path = dt_get_url_path();
                     <?php endif; ?>
 
 
-                    <?php if ( strpos( $dt_url_path, 'dispatcher-tools/dash' ) !== false ) :
+                    <?php if ( $dt_url_path === 'dispatcher-tools' || strpos( $dt_url_path, 'dispatcher-tools/dash' ) !== false ) :
                         $dash_stats = DT_Dispatcher_Tools_Endpoints::get_dash_stats(); ?>
                         <h3 class="section-header"><?php esc_html_e( "Contacts", 'disciple_tools' ) ?></h3>
                         <div class="center callout">

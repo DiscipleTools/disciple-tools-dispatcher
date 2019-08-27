@@ -22,8 +22,8 @@ class DT_Dispatcher_Tools_Functions
 
     public function my_theme_redirect() {
         $url = dt_get_url_path();
+        $plugin_dir = dirname( __FILE__ );
         if ( strpos( $url, "dispatcher-tools" ) !== false ){
-            $plugin_dir = dirname( __FILE__ );
             $path = $plugin_dir . '/template-dispatcher-tools.php';
             include( $path );
             die();
