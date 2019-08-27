@@ -191,6 +191,8 @@ class DT_Dispatcher_Tools_Endpoints
             $current += 24 * 60 * 60;
         }
 
+        $times = self::times( $user->ID );
+
         return [
             "display_name" => $user->display_name,
             "user_status" => $user_status,
@@ -201,9 +203,8 @@ class DT_Dispatcher_Tools_Endpoints
             "update_needed" => $update_needed,
             "unread_notifications" => $notification_count ? $notification_count : 0,
             "needs_accepted" => $to_accept,
-            "days_active" => $daily_activity
-//            "times_to_accept" => [ 132, 320939, 390484, 39039 ],
-//            "times_to_contact_attempt" => [ 23, 39032, 4093, 33333 ]
+            "days_active" => $daily_activity,
+            "times" => $times
         ];
 
 
@@ -275,8 +276,9 @@ class DT_Dispatcher_Tools_Endpoints
             }
         }
 
-
-        set_transient( 'dispatcher_user_data', maybe_serialize( $users ), 60 * 60 * 24 );
+        if ( !empty( $users ) ){
+            set_transient( 'dispatcher_user_data', maybe_serialize( $users ), 60 * 60 * 24 );
+        }
 
         return $users;
     }
@@ -462,6 +464,128 @@ class DT_Dispatcher_Tools_Endpoints
         }
 
         return $numbers;
+    }
+
+
+    private static function times( $user_id ){
+        global $wpdb;
+        $user_assigned_to = 'user-' . esc_sql( $user_id );
+        $contact_attempts = $wpdb->get_results( $wpdb->prepare( "
+            SELECT contacts.ID,
+                MAX(date_assigned.hist_time) as date_assigned, 
+                MIN(date_attempted.hist_time) as date_attempted, 
+                MIN(date_attempted.hist_time) - MAX(date_assigned.hist_time) as time,
+                contacts.post_title as name
+            from $wpdb->posts as contacts
+            INNER JOIN $wpdb->postmeta as pm on ( contacts.ID = pm.post_id AND pm.meta_key = 'assigned_to' )
+            INNER JOIN $wpdb->dt_activity_log as date_attempted on ( date_attempted.meta_key = 'seeker_path' and date_attempted.object_type = 'contacts' AND date_attempted.object_id = contacts.ID AND date_attempted.meta_value ='attempted' )
+            INNER JOIN $wpdb->dt_activity_log as date_assigned on ( 
+                date_assigned.meta_key = 'assigned_to' 
+                AND date_assigned.object_type = 'contacts' 
+                AND date_assigned.object_id = contacts.ID
+                AND date_assigned.meta_value = %s )
+            WHERE date_attempted.hist_time > date_assigned.hist_time
+            AND pm.meta_value = %s
+            AND date_assigned.hist_time = ( 
+                SELECT MAX(hist_time) FROM $wpdb->dt_activity_log a WHERE
+                a.meta_key = 'assigned_to' 
+                AND a.object_type = 'contacts' 
+                AND a.object_id = contacts.ID )  
+            AND contacts.ID NOT IN (
+                SELECT post_id FROM $wpdb->postmeta
+                WHERE meta_key = 'corresponds_to_user' AND meta_value != 0
+                GROUP BY post_id )
+            GROUP by contacts.ID
+            ORDER BY date_attempted desc
+            LIMIT 10
+        ", $user_assigned_to, $user_assigned_to ), ARRAY_A);
+        $un_attempted_contacts = $wpdb->get_results( $wpdb->prepare( "
+            SELECT contacts.ID,
+                MAX(date_assigned.hist_time) as date_assigned, 
+                %d - MAX(date_assigned.hist_time) as time,
+                contacts.post_title as name
+            from $wpdb->posts as contacts
+            INNER JOIN $wpdb->postmeta as pm on ( contacts.ID = pm.post_id AND pm.meta_key = 'assigned_to' )
+            INNER JOIN $wpdb->postmeta as pm1 on ( contacts.ID = pm1.post_id AND pm1.meta_key = 'seeker_path' and pm1.meta_value = 'none' )
+            INNER JOIN $wpdb->postmeta as pm2 on ( contacts.ID = pm2.post_id AND pm2.meta_key = 'overall_status' and pm2.meta_value = 'active' )
+            INNER JOIN $wpdb->dt_activity_log as date_assigned on ( 
+                date_assigned.meta_key = 'assigned_to' 
+                AND date_assigned.object_type = 'contacts' 
+                AND date_assigned.object_id = contacts.ID
+                AND date_assigned.meta_value = %s )
+            WHERE pm.meta_value = %s
+            AND contacts.ID NOT IN (
+                SELECT post_id FROM $wpdb->postmeta
+                WHERE meta_key = 'corresponds_to_user' AND meta_value != 0
+                GROUP BY post_id )
+            GROUP by contacts.ID
+            ORDER BY date_assigned asc
+            LIMIT 10
+        ", time(), $user_assigned_to, $user_assigned_to ), ARRAY_A);
+        $contact_accepts = $wpdb->get_results( $wpdb->prepare( "
+            SELECT contacts.ID,
+                MAX(date_assigned.hist_time) as date_assigned, 
+                MIN(date_accepted.hist_time) as date_accepted, 
+                MIN(date_accepted.hist_time) - MAX(date_assigned.hist_time) as time,
+                contacts.post_title as name
+            from $wpdb->posts as contacts
+            INNER JOIN $wpdb->postmeta as pm on ( contacts.ID = pm.post_id AND pm.meta_key = 'assigned_to' )
+            INNER JOIN $wpdb->dt_activity_log as date_accepted on ( 
+                date_accepted.meta_key = 'overall_status' 
+                AND date_accepted.object_type = 'contacts' 
+                AND date_accepted.object_id = contacts.ID 
+                AND date_accepted.meta_value = 'active' )
+            INNER JOIN $wpdb->dt_activity_log as date_assigned on ( 
+                date_assigned.meta_key = 'assigned_to' 
+                AND date_assigned.object_type = 'contacts' 
+                AND date_assigned.object_id = contacts.ID
+                AND date_assigned.user_id != %d
+                AND date_assigned.meta_value = %s )
+            WHERE date_accepted.hist_time > date_assigned.hist_time
+            AND pm.meta_value = %s
+            AND date_assigned.hist_time = ( 
+                SELECT MAX(hist_time) FROM $wpdb->dt_activity_log a WHERE
+                a.meta_key = 'assigned_to' 
+                AND a.object_type = 'contacts' 
+                AND a.object_id = contacts.ID )
+            AND contacts.ID NOT IN (
+                SELECT post_id FROM $wpdb->postmeta
+                WHERE meta_key = 'corresponds_to_user' AND meta_value != 0
+                GROUP BY post_id )
+            GROUP by contacts.ID
+            ORDER BY date_accepted desc
+            LIMIT 10
+        ", esc_sql( $user_id ), $user_assigned_to, $user_assigned_to ), ARRAY_A);
+        $un_accepted_contacts = $wpdb->get_results( $wpdb->prepare( "
+            SELECT contacts.ID,
+                MAX(date_assigned.hist_time) as date_assigned, 
+                %d - MAX(date_assigned.hist_time) as time,
+                contacts.post_title as name
+            from $wpdb->posts as contacts
+            INNER JOIN $wpdb->postmeta as pm on ( contacts.ID = pm.post_id AND pm.meta_key = 'assigned_to' )
+            INNER JOIN $wpdb->postmeta as pm1 on ( contacts.ID = pm1.post_id AND pm1.meta_key = 'overall_status' and pm1.meta_value = 'assigned' )
+            INNER JOIN $wpdb->dt_activity_log as date_assigned on ( 
+                date_assigned.meta_key = 'assigned_to' 
+                AND date_assigned.object_type = 'contacts' 
+                AND date_assigned.object_id = contacts.ID
+                AND date_assigned.meta_value = %s )
+            WHERE pm.meta_value = %s
+            AND contacts.ID NOT IN (
+                SELECT post_id FROM $wpdb->postmeta
+                WHERE meta_key = 'corresponds_to_user' AND meta_value != 0
+                GROUP BY post_id )
+            GROUP by contacts.ID
+            ORDER BY date_assigned asc
+            LIMIT 10
+        ", time(), $user_assigned_to, $user_assigned_to ), ARRAY_A);
+
+
+        return [
+            'contact_attempts' => $contact_attempts,
+            'contact_accepts' => $contact_accepts,
+            'unaccepted_contacts' => $un_accepted_contacts,
+            'unattempted_contacts' => $un_attempted_contacts
+        ];
     }
 
 }

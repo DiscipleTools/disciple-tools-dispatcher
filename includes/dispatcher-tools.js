@@ -74,6 +74,57 @@ jQuery(document).ready(function($) {
         $('#unread_notifications').html(response.unread_notifications)
         day_activity_chart(response.days_active)
 
+        // 10s
+        // contacts assigned but not accepted
+        let unaccepted_contacts_html = ``
+        response.times.unaccepted_contacts.forEach(contact=>{
+          let days = contact.time / 60 / 60 / 24;
+          unaccepted_contacts_html += `<li>
+            <a href="${window.wpApiShare.site_url}/contacts/${_.escape(contact.ID)}" target="_blank">
+                ${_.escape(contact.name)} has be waiting to be accepted for ${days.toFixed(1)} days
+                </a> </li>`
+        })
+        $('#unaccepted_contacts').html(unaccepted_contacts_html)
+
+        // assigned to contact accept
+        let accepted_contacts_html = ``
+        let avg_contact_accept = 0
+        response.times.contact_accepts.forEach(contact=>{
+          let days = contact.time / 60 / 60 / 24;
+          avg_contact_accept += days
+          accepted_contacts_html += `<li>
+            <a href="${window.wpApiShare.site_url}/contacts/${_.escape(contact.ID)}" target="_blank">
+                ${_.escape(contact.name)} was accepted on ${moment.unix(contact.date_accepted).format("MMM Do")} after ${days.toFixed(1)} days
+            </a> </li>`
+        })
+        $('#contact_accepts').html(accepted_contacts_html)
+        $('#avg_contact_accept').html( avg_contact_accept === 0 ? '-' : (avg_contact_accept / response.times.contact_accepts.length).toFixed(1))
+
+        //contacts assigned with no contact attempt
+        let unattemped_contacts_html = ``
+        response.times.unattempted_contacts.forEach(contact=>{
+          let days = contact.time / 60 / 60 / 24;
+          unattemped_contacts_html += `<li>
+            <a href="${window.wpApiShare.site_url}/contacts/${_.escape(contact.ID)}" target="_blank">
+                ${_.escape(contact.name)} waiting for contact for ${days.toFixed(1)} days
+            </a> </li>`
+        })
+        $('#unattempted_contacts').html(unattemped_contacts_html)
+
+        //contact assigned to contact attempt
+        let attempted_contacts_html = ``
+        let avg_contact_attempt = 0
+        response.times.contact_attempts.forEach(contact=>{
+          let days = contact.time / 60 / 60 / 24;
+          avg_contact_attempt += days
+          attempted_contacts_html += `<li>
+            <a href="${window.wpApiShare.site_url}/contacts/${_.escape(contact.ID)}" target="_blank">
+                Contact with ${_.escape(contact.name)} was attempted on ${moment.unix(contact.date_attempted).format("MMM Do")} after ${days.toFixed(1)} days
+            </a> </li>`
+        })
+        $('#contact_attempts').html(attempted_contacts_html)
+        $('#avg_contact_attempt').html( avg_contact_attempt === 0 ? '-' : (avg_contact_attempt / response.times.contact_attempts.length).toFixed(1))
+
         //Activity history
         let activity_div = $('#activity')
         let activity_html = ``;

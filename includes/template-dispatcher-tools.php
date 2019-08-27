@@ -264,9 +264,19 @@ $dt_url_path = dt_get_url_path();
                         </div>
                         </div>
                         <div class="bordered-box">
-                        <h3>Stats</h3>
-                        <div class="subheader">Daily Activity</div>
-                        <div id="day_activity_chart" style="height: 300px"></div>
+                            <h3>Stats</h3>
+                            <div class="subheader">Daily Activity</div>
+                            <div id="day_activity_chart" style="height: 300px"></div>
+
+                            <div class="subheader">Assigned and not accepted</div>
+                            <ul id="unaccepted_contacts"></ul>
+                            <div class="subheader">Last 10 assigned to accepted duration (<span id="avg_contact_accept"></span> days average)</div>
+                            <ul id="contact_accepts"></ul>
+                            <div class="subheader">Accepted with no contact attempt</div>
+                            <ul id="unattempted_contacts"></ul>
+                            <div class="subheader">Last 10 assigned to contact attempt (<span id="avg_contact_attempt"></span> days average)</div>
+
+                            <ul id="contact_attempts"></ul>
                         </div>
                     </div>
                     <div style="flex-basis: 50%; padding-left: 10px" class="user_modal_column">
