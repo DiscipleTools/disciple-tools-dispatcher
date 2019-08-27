@@ -359,7 +359,8 @@ class DT_Dispatcher_Tools_Endpoints
         ];
         return $results;
     }
-    public static function query_project_hero_stats() {
+
+    private static function query_project_hero_stats() {
         global $wpdb;
 
         $numbers = [];

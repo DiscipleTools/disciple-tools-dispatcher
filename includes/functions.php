@@ -2,6 +2,8 @@
 
 class DT_Dispatcher_Tools_Functions
 {
+    public $permissions = [ 'view_any_contacts' ];
+
     private static $_instance = null;
     public static function instance() {
         if ( is_null( self::$_instance ) ) {
@@ -11,13 +13,25 @@ class DT_Dispatcher_Tools_Functions
     } // End instance()
 
     public function __construct() {
-        add_action( 'dt_top_nav_desktop', [ $this, 'add_nav_bar_link' ] );
-        add_action( "template_redirect", [ $this, 'my_theme_redirect' ] );
-        $url_path = dt_get_url_path();
-        if ( strpos( $url_path, 'dispatcher-tools' ) !== false ) {
-            add_filter( 'dt_metrics_menu', [ $this, 'add_menu' ], 20 );
-            add_action( 'wp_enqueue_scripts', [ $this, 'scripts' ], 99 );
+        if ( $this->has_permission() ){
+            add_action( 'dt_top_nav_desktop', [ $this, 'add_nav_bar_link' ] );
+            add_action( "template_redirect", [ $this, 'my_theme_redirect' ] );
+            $url_path = dt_get_url_path();
+            if ( strpos( $url_path, 'dispatcher-tools' ) !== false ) {
+                add_filter( 'dt_metrics_menu', [ $this, 'add_menu' ], 20 );
+                add_action( 'wp_enqueue_scripts', [ $this, 'scripts' ], 99 );
+            }
         }
+    }
+
+    public function has_permission(){
+        $pass = false;
+        foreach ( $this->permissions as $permission ){
+            if ( current_user_can( $permission ) ){
+                $pass = true;
+            }
+        }
+        return $pass;
     }
 
     public function my_theme_redirect() {
