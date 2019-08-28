@@ -72,6 +72,11 @@ jQuery(document).ready(function($) {
         $('#needs_accepted_count').html(response.needs_accepted["total"])
         $('#active_contacts').html(response.active_contacts)
         $('#unread_notifications').html(response.unread_notifications)
+        $('#assigned_this_month').text(response.assigned_counts.this_month)
+        $('#assigned_last_month').text(response.assigned_counts.last_month)
+        $('#assigned_this_year').text(response.assigned_counts.this_year)
+        $('#assigned_all_time').text(response.assigned_counts.all_time)
+
         day_activity_chart(response.days_active)
 
         // 10s
@@ -124,6 +129,17 @@ jQuery(document).ready(function($) {
         })
         $('#contact_attempts').html(attempted_contacts_html)
         $('#avg_contact_attempt').html( avg_contact_attempt === 0 ? '-' : (avg_contact_attempt / response.times.contact_attempts.length).toFixed(1))
+
+        let update_needed_list_html = ``
+        response.update_needed.contacts.forEach(contact=>{
+          update_needed_list_html += `<li>
+            <a href="${window.wpApiShare.site_url}/contacts/${_.escape(contact.ID)}" target="_blank">
+                ${_.escape(contact.post_title)} ${_.escape(contact.last_modified_msg)}
+            </a>
+          </li>`
+        })
+        $('#update_needed_list').html(update_needed_list_html)
+
 
         //Activity history
         let activity_div = $('#activity')

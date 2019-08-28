@@ -190,6 +190,15 @@ $dt_url_path = dt_get_url_path();
                         </div>
                         <p style="text-align: center" id="unread_notifications"></p>
                     </div>
+                    <div class="bordered-box">
+                        <div class="section-subheader">Contacts Assigned</div>
+                        <ul class="ul-no-bullets">
+                            <li>This month: <span id="assigned_this_month"></span></li>
+                            <li>Last month: <span id="assigned_last_month"></span></li>
+                            <li>This year: <span id="assigned_this_year"></span></li>
+                            <li>Last year year: <span id="assigned_all_time"></span></li>
+                        </ul>
+                    </div>
 
                 </div>
 
@@ -275,8 +284,9 @@ $dt_url_path = dt_get_url_path();
                             <div class="subheader">Accepted with no contact attempt</div>
                             <ul id="unattempted_contacts"></ul>
                             <div class="subheader">Last 10 assigned to contact attempt (<span id="avg_contact_attempt"></span> days average)</div>
-
                             <ul id="contact_attempts"></ul>
+                            <div class="subheader">Oldest 10 update needed</div>
+                            <ul id="update_needed_list"></ul>
                         </div>
                     </div>
                     <div style="flex-basis: 50%; padding-left: 10px" class="user_modal_column">

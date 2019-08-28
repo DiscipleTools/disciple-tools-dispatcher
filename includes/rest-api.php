@@ -120,22 +120,37 @@ class DT_Dispatcher_Tools_Endpoints
             }
         }
 
-        $test = "";
+        $month_start = strtotime( date( 'Y-m-01' ) );
+        $last_month_start = strtotime( 'first day of last month' );
+        $this_year = strtotime( "first day of january this year" );
+        //number of assigned contacts
+        $assigned_counts = $wpdb->get_results( $wpdb->prepare( "
+            SELECT 
+            COUNT( CASE WHEN date_assigned.hist_time >= %d THEN 1 END ) as this_month,
+            COUNT( CASE WHEN date_assigned.hist_time >= %d AND date_assigned.hist_time < %d THEN 1 END ) as last_month,
+            COUNT( CASE WHEN date_assigned.hist_time >= %d THEN 1 END ) as this_year,
+            COUNT( date_assigned.histid ) as all_time
+            FROM $wpdb->dt_activity_log as date_assigned
+            WHERE date_assigned.meta_key = 'assigned_to' 
+                AND date_assigned.object_type = 'contacts' 
+                AND date_assigned.meta_value = %s
+        ", $month_start, $last_month_start, $month_start, $this_year, 'user-' . $user->ID ), ARRAY_A );
 
         $to_accept = Disciple_Tools_Contacts::search_viewable_contacts( [
             'overall_status' => [ 'assigned' ],
-            'assigned_to'    => [ 'me' ]
+            'assigned_to'    => [ $user->ID ]
         ] );
         $update_needed = Disciple_Tools_Contacts::search_viewable_contacts( [
             'requires_update' => [ "true" ],
-            'assigned_to'     => [ 'me' ],
-            'overall_status' => [ '-closed' ]
+            'assigned_to'     => [ $user->ID ],
+            'overall_status' => [ '-closed' ],
+            'sort' => 'last_modified'
         ] );
         if ( sizeof( $update_needed["contacts"] ) > 5 ) {
             $update_needed["contacts"] = array_slice( $update_needed["contacts"], 0, 5 );
         }
-        if ( sizeof( $to_accept["contacts"] ) > 5 ) {
-            $to_accept["contacts"] = array_slice( $to_accept["contacts"], 0, 5 );
+        if ( sizeof( $to_accept["contacts"] ) > 10 ) {
+            $to_accept["contacts"] = array_slice( $to_accept["contacts"], 0, 10 );
         }
         foreach ( $update_needed["contacts"] as &$contact ){
             $now = time();
@@ -165,11 +180,6 @@ class DT_Dispatcher_Tools_Endpoints
         $days_active = [];
         foreach ( $days_active_results as $a ){
             $days_active[$a["day"]] = $a;
-//            $time = strtotime( $a['day'] );
-//            $a["weekday"] = date( 'l', $time );
-//            $day = date( 'w', $time );
-//            $week_start = date( 'Y-m-d', strtotime( '-' . $day . ' days', $time ) );
-//            $a["week_start"] = $week_start;
         }
         $first = strtotime( $days_active_results[0]['day'] );
         $first_week_start = date( 'Y-m-d', strtotime( '-' . date( 'w', $first )  . ' days', $first ) );
@@ -204,7 +214,8 @@ class DT_Dispatcher_Tools_Endpoints
             "unread_notifications" => $notification_count ? $notification_count : 0,
             "needs_accepted" => $to_accept,
             "days_active" => $daily_activity,
-            "times" => $times
+            "times" => $times,
+            "assigned_counts" => isset( $assigned_counts[0] ) ? $assigned_counts[0] : []
         ];
 
 
