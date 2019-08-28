@@ -243,26 +243,34 @@ class DT_Dispatcher_Tools_Endpoints
         $user_data = $wpdb->get_results( $wpdb->prepare( "
             SELECT users.ID,
                 users.display_name,
-                um1.meta_value as user_status,
                 count(pm.post_id) as number_assigned_to,
                 count(active.post_id) as number_active,
                 count(new_assigned.post_id) as number_new_assigned,
                 count(update_needed.post_id) as number_update
             from $wpdb->users as users
             INNER JOIN $wpdb->usermeta as um on ( um.user_id = users.ID AND um.meta_key = 'wp_capabilities' AND um.meta_value LIKE %s )
-            LEFT JOIN $wpdb->usermeta as um1 on ( um1.user_id = users.ID AND um1.meta_key = %s )
             INNER JOIN $wpdb->postmeta as pm on (pm.meta_key = 'assigned_to' and pm.meta_value = CONCAT( 'user-', users.ID ) )
             INNER JOIN $wpdb->postmeta as type on (type.post_id = pm.post_id and type.meta_key = 'type' and ( type.meta_value = 'media' OR type.meta_value = 'next_gen' ) )
             LEFT JOIN $wpdb->postmeta as active on (active.post_id = pm.post_id and active.meta_key = 'overall_status' and active.meta_value = 'active' )
             LEFT JOIN $wpdb->postmeta as new_assigned on (new_assigned.post_id = pm.post_id and new_assigned.meta_key = 'overall_status' and new_assigned.meta_value = 'assigned' )
             LEFT JOIN $wpdb->postmeta as update_needed on (update_needed.post_id = pm.post_id and update_needed.meta_key = 'requires_update' and update_needed.meta_value = '1' )
-            GROUP by users.ID", '%multiplier%', $wpdb->prefix . 'user_status' ),
+            GROUP by users.ID", '%multiplier%' ),
         ARRAY_A );
 
         $users = [];
         foreach ( $user_data as $user ) {
             $users[ $user["ID"] ] = $user;
         }
+        $user_statuses = $wpdb->get_results( $wpdb->prepare( "
+            SELECT * FROM $wpdb->usermeta
+            WHERE meta_key = %s
+        ", $wpdb->prefix . 'user_status' ), ARRAY_A );
+        foreach ( $user_statuses as $meta_row ){
+            if ( isset( $users[ $meta_row["user_id"] ] ) ) {
+                $users[$meta_row["user_id"]]["user_status"] = $meta_row["meta_value"];
+            }
+        }
+
 
         $last_activity = $wpdb->get_results( "
             SELECT user_id,
