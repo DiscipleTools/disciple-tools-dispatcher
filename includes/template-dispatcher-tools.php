@@ -165,6 +165,9 @@ $dt_url_path = dt_get_url_path();
                             </div>
                         </div>
 
+                        <h3 class="section-header"><?php esc_html_e( "Statuses", 'disciple_tools' ) ?></h3>
+                        <div id="status_chart_div" style="height:500px"></div>
+
                     <?php endif; ?>
                     </div><!-- Container for charts -->
 
@@ -174,6 +177,7 @@ $dt_url_path = dt_get_url_path();
 
         </div>
 
+        <?php if ( strpos( $dt_url_path, 'dispatcher-tools/multipliers' ) !== false ) : ?>
         <div class="full reveal" id="user_modal" data-reveal style="background-color: #e2e2e2">
             <span style="display: inline-block" class="loading-spinner users-spinner"></span>
             <div id="user_modal_content">
@@ -329,6 +333,7 @@ $dt_url_path = dt_get_url_path();
                 </div>
             </div>
         </div>
+        <?php endif; ?>
 
     </div> <!-- end #inner-content -->
 

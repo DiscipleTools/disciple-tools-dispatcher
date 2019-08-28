@@ -633,21 +633,39 @@ class DT_Dispatcher_Tools_Endpoints
     }
 
 
-    private function get_contact_statuses( $user_id){
+    public static function get_contact_statuses( $user_id = null ){
         global $wpdb;
         $post_settings = apply_filters( "dt_get_post_type_settings", [], "contacts" );
-        $contact_statuses = $wpdb->get_results( $wpdb->prepare( "
-            SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as status FROM $wpdb->posts p
-            INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
-            INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'overall_status' )
-            GROUP BY pm1.meta_value
-        ", 'user-' . $user_id ), ARRAY_A );
-        $reason_closed = $wpdb->get_results( $wpdb->prepare( "
-            SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as reason FROM $wpdb->posts p
-            INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
-            INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'reason_closed' )
-            GROUP BY pm1.meta_value
-        ", 'user-' . $user_id ), ARRAY_A );
+        if ( $user_id ){
+            $contact_statuses = $wpdb->get_results( $wpdb->prepare( "
+                SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as status FROM $wpdb->posts p
+                INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
+                INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'overall_status' )
+                WHERE p.post_type = 'contacts'
+                GROUP BY pm1.meta_value
+            ", 'user-' . $user_id ), ARRAY_A );
+        } else {
+            $contact_statuses = $wpdb->get_results( "
+                SELECT COUNT(meta_value) as count, meta_value as status FROM $wpdb->postmeta 
+                WHERE meta_key = 'overall_status'
+                GROUP BY meta_value
+            ", ARRAY_A );
+        }
+        if ( $user_id ){
+            $reason_closed = $wpdb->get_results( $wpdb->prepare( "
+                SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as reason FROM $wpdb->posts p
+                INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
+                INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'reason_closed' )
+                WHERE p.post_type = 'contacts'
+                GROUP BY pm1.meta_value
+            ", 'user-' . $user_id ), ARRAY_A );
+        } else {
+            $reason_closed = $wpdb->get_results( "
+                SELECT COUNT(meta_value) as count, meta_value as reason FROM $wpdb->postmeta 
+                WHERE meta_key = 'reason_closed'
+                GROUP BY meta_value
+            ", ARRAY_A );
+        }
         foreach ( $reason_closed as &$reason ){
             if ( isset( $post_settings["fields"]["reason_closed"]['default'][ $reason['reason'] ]['label'] ) ) {
                 $reason['reason'] = $post_settings["fields"]["reason_closed"]['default'][$reason['reason']]['label'];
@@ -656,12 +674,20 @@ class DT_Dispatcher_Tools_Endpoints
                 $reason['reason'] = "No reason set";
             }
         }
-        $reason_paused = $wpdb->get_results( $wpdb->prepare( "
-            SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as reason FROM $wpdb->posts p
-            INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
-            INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'reason_paused' )
-            GROUP BY pm1.meta_value
-        ", 'user-' . $user_id ), ARRAY_A );
+        if ( $user_id ){
+            $reason_paused = $wpdb->get_results( $wpdb->prepare( "
+                SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as reason FROM $wpdb->posts p
+                INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
+                INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'reason_paused' )
+                GROUP BY pm1.meta_value
+            ", 'user-' . $user_id ), ARRAY_A );
+        } else {
+            $reason_paused = $wpdb->get_results( "
+                SELECT COUNT(meta_value) as count, meta_value as reason FROM $wpdb->postmeta 
+                WHERE meta_key = 'reason_paused'
+                GROUP BY meta_value
+            ", ARRAY_A );
+        }
         foreach ( $reason_paused as &$reason ){
             if ( isset( $post_settings["fields"]["reason_paused"]['default'][ $reason['reason'] ]['label'] ) ) {
                 $reason['reason'] = $post_settings["fields"]["reason_paused"]['default'][$reason['reason']]['label'];
@@ -670,12 +696,20 @@ class DT_Dispatcher_Tools_Endpoints
                 $reason['reason'] = "No reason set";
             }
         }
-        $reason_unassignable = $wpdb->get_results( $wpdb->prepare( "
-            SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as reason FROM $wpdb->posts p
-            INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
-            INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'reason_unassignable' )
-            GROUP BY pm1.meta_value
-        ", 'user-' . $user_id ), ARRAY_A );
+        if ( $user_id ){
+            $reason_unassignable = $wpdb->get_results( $wpdb->prepare( "
+                SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as reason FROM $wpdb->posts p
+                INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
+                INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'reason_unassignable' )
+                GROUP BY pm1.meta_value
+            ", 'user-' . $user_id ), ARRAY_A );
+        } else {
+            $reason_unassignable = $wpdb->get_results( "
+                SELECT COUNT(meta_value) as count, meta_value as reason FROM $wpdb->postmeta 
+                WHERE meta_key = 'reason_unassignable'
+                GROUP BY meta_value
+            ", ARRAY_A );
+        }
         foreach ( $reason_unassignable  as &$reason ){
             if ( isset( $post_settings["fields"]["reason_unassignable "]['default'][ $reason['reason'] ]['label'] ) ) {
                 $reason['reason'] = $post_settings["fields"]["reason_unassignable "]['default'][$reason['reason']]['label'];

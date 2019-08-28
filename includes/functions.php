@@ -81,6 +81,7 @@ class DT_Dispatcher_Tools_Functions
             'amcharts-animated',
         ], filemtime( plugin_dir_path( __FILE__ ) . '/dispatcher-tools.js' ), true );
 
+        $contact_statuses = DT_Dispatcher_Tools_Endpoints::instance()->get_contact_statuses();
         wp_localize_script(
             'dt_dispatcher_tools', 'dtDispatcherTools', [
                 'root'               => esc_url_raw( rest_url() ),
@@ -88,7 +89,9 @@ class DT_Dispatcher_Tools_Functions
                 'nonce'              => wp_create_nonce( 'wp_rest' ),
                 'current_user_login' => wp_get_current_user()->user_login,
                 'current_user_id'    => get_current_user_id(),
-                'data'               => [],
+                'data'               => [
+                    'contact_statuses' => $contact_statuses
+                ],
                 'url_path'       => dt_get_url_path()
             ]
         );
