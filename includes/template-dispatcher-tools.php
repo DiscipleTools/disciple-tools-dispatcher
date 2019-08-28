@@ -313,6 +313,10 @@ $dt_url_path = dt_get_url_path();
                             <ul id="contact_attempts"></ul>
                             <div class="subheader">Oldest 10 update needed</div>
                             <ul id="update_needed_list"></ul>
+
+
+                            <div class="subheader">Contact Statuses</div>
+                            <div id="status_chart_div" style="height:300px"></div>
                         </div>
                     </div>
                     <div style="flex-basis: 50%; padding-left: 10px" class="user_modal_column">
