@@ -360,12 +360,33 @@ class DT_Dispatcher_Tools_Endpoints
     }
 
     public static function get_dash_stats(){
+        global $wpdb;
         $stats = self::query_project_hero_stats();
         $multipliers = self::get_users();
+
+        $month_start = strtotime( date( 'Y-m-01' ) );
+        $last_month_start = strtotime( 'first day of last month' );
+        $this_year = strtotime( "first day of january this year" );
+        //number of assigned contacts
+        $assigned_counts = $wpdb->get_results( $wpdb->prepare( "
+            SELECT 
+            COUNT( CASE WHEN date_assigned.hist_time >= %d THEN 1 END ) as this_month,
+            COUNT( CASE WHEN date_assigned.hist_time >= %d AND date_assigned.hist_time < %d THEN 1 END ) as last_month,
+            COUNT( CASE WHEN date_assigned.hist_time >= %d THEN 1 END ) as this_year,
+            COUNT( date_assigned.histid ) as all_time
+            FROM $wpdb->dt_activity_log as date_assigned
+            WHERE date_assigned.meta_key = 'assigned_to'
+                AND date_assigned.object_type = 'contacts' 
+                AND date_assigned.old_value <> ''
+        ", $month_start, $last_month_start, $month_start, $this_year ), ARRAY_A );
+
         $multipliers_stats = [
             "status" => []
         ];
         foreach ( $multipliers as $m ) {
+            if ( !isset( $m["user_status"] ) ) {
+                $m["user_status"] = "";
+            }
             if ( !isset( $multipliers_stats["status"][$m["user_status"]] ) ){
                 $multipliers_stats["status"][$m["user_status"]] = 0;
             }
@@ -376,7 +397,8 @@ class DT_Dispatcher_Tools_Endpoints
             'active_contacts' => $stats['active_contacts'],
             'needs_accepted' => $stats['needs_accept'],
             'updates_needed' => $stats['needs_update'],
-            'multiplier_stats' => $multipliers_stats
+            'multiplier_stats' => $multipliers_stats,
+            'assigned_counts' => isset( $assigned_counts[0] ) ? $assigned_counts[0] : []
         ];
         return $results;
     }
