@@ -171,7 +171,7 @@ class DT_Dispatcher_Tools_Endpoints
         $days_active_results = $wpdb->get_results( $wpdb->prepare( "
             SELECT FROM_UNIXTIME(`hist_time`, '%%Y-%%m-%%d') as day,
             count(histid) as activity_count
-            FROM wp_dt_activity_log 
+            FROM $wpdb->dt_activity_log 
             WHERE user_id = %s 
             group by day 
             ORDER BY `day` ASC",
