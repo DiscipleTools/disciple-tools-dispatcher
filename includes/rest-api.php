@@ -68,6 +68,7 @@ class DT_Dispatcher_Tools_Endpoints
         $user = get_user_by( "ID", $params["user"] );
 
         $user_status = get_user_option( 'user_status', $user->ID );
+        $workload_status = get_user_option( 'workload_status', $user->ID );
 
         $location_grids = DT_Mapping_Module::instance()->get_post_locations( dt_get_associated_user_id( $user->ID, 'user' ) );
         $locations = [];
@@ -208,6 +209,7 @@ class DT_Dispatcher_Tools_Endpoints
         return [
             "display_name" => $user->display_name,
             "user_status" => $user_status,
+            "workload_status" => $workload_status,
             "locations" => $locations,
             "dates_unavailable" => $dates_unavailable ? $dates_unavailable : [],
             "user_activity" => $user_activity,
@@ -321,6 +323,9 @@ class DT_Dispatcher_Tools_Endpoints
             }
             if ( !empty( $body["user_status"] ) ) {
                 update_user_option( $user->ID, 'user_status', $body["user_status"] );
+            }
+            if ( !empty( $body["workload_status"] ) ) {
+                update_user_option( $user->ID, 'workload_status', $body["workload_status"] );
             }
             if ( !empty( $body["add_location"] ) ){
                 Disciple_Tools_Users::add_user_location( $body["add_location"], $user->ID );

@@ -63,6 +63,7 @@ jQuery(document).ready(function($) {
           $('#status-select').val(response.user_status)
           if ( response.user_status !== "0" ){
           }
+          $('#workload-select').val(response.workload_status)
 
           //locations
           let typeahead = Typeahead['.js-typeahead-location_grid']
@@ -200,6 +201,10 @@ jQuery(document).ready(function($) {
     $('#status-select').on('change', function () {
       let value = $(this).val()
       update_user( user_id, 'user_status', value)
+    })
+    $('#workload-select').on('change', function () {
+      let value = $(this).val()
+      update_user( user_id, 'workload_status', value)
     })
 
     /**

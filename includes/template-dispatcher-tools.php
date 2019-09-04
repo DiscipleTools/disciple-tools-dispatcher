@@ -247,6 +247,16 @@ $dt_url_path = dt_get_url_path();
                             </select>
                         </div>
                         <div class="bordered-box">
+                            <h3>Workload status</h3>
+                            <select id="workload-select" class="user-select">
+                            <?php $workload_status_options = dt_get_site_custom_lists()["user_workload_status"] ?? [] ?>
+                                <option></option>
+                                <?php foreach ( $workload_status_options as $key => $val ) : ?>
+                                    <option value="<?php echo esc_html( $key ) ?>"><?php echo esc_html( $val["label"] ) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="bordered-box">
                         <h3>Locations the multiplier is responsible for</h3>
                         <div class="location_grid">
                             <var id="location_grid-result-container" class="result-container"></var>
