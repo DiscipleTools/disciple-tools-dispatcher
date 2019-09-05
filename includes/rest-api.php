@@ -286,6 +286,15 @@ class DT_Dispatcher_Tools_Endpoints
                 $users[$meta_row["user_id"]]["user_status"] = $meta_row["meta_value"];
             }
         }
+        $user_workloads = $wpdb->get_results( $wpdb->prepare( "
+            SELECT * FROM $wpdb->usermeta
+            WHERE meta_key = %s
+        ", $wpdb->prefix . 'workload_status' ), ARRAY_A );
+        foreach ( $user_workloads as $meta_row ){
+            if ( isset( $users[ $meta_row["user_id"] ] ) ) {
+                $users[$meta_row["user_id"]]["workload_status"] = $meta_row["meta_value"];
+            }
+        }
 
 
         $last_activity = $wpdb->get_results( "

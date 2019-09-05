@@ -54,6 +54,7 @@ $dt_url_path = dt_get_url_path();
                                 <tr>
                                     <th>Display Name</th>
                                     <th class="select-filter">Status</th>
+                                    <th class="select-filter">Workload</th>
                                     <th>Accept Needed</th>
                                     <th>Update Needed</th>
                                     <th>Active</th>
@@ -61,10 +62,13 @@ $dt_url_path = dt_get_url_path();
                                 </tr>
                             </thead>
                             <tbody>
-                            <?php foreach ( $users as $user_i => $user ) : ?>
+                            <?php
+                            $workload_status_options = dt_get_site_custom_lists()["user_workload_status"] ?? [];
+                            foreach ( $users as $user_i => $user ) : ?>
                             <tr class="user_row" style="cursor: pointer"data-user="<?php echo esc_html( $user["ID"] ) ?>">
                                 <td data-user="<?php echo esc_html( $user["ID"] ) ?>"><?php echo esc_html( $user["display_name"] ) ?></td>
                                 <td><?php echo esc_html( $user["user_status"] ?? "" ) ?></td>
+                                <td><?php echo esc_html( isset($user["workload_status"], $workload_status_options[ $user["workload_status"] ] ) ? $workload_status_options[ $user["workload_status"] ]["label"] : "" ) ?></td>
                                 <td><?php echo esc_html( $user["number_new_assigned"] ) ?></td>
                                 <td>
                                     <?php if ( $user["number_update"] > 5 ) : ?>
