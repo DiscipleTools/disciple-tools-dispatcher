@@ -245,9 +245,9 @@ jQuery(document).ready(function($) {
       let rows = ``
       list.forEach(range=>{
         rows += `<tr>
-        <td>${range.start_date}</td>
-        <td>${range.end_date}</td>
-        <td><button class="button remove_dates_unavailable" data-id="${range.id}">Remove</button></td>
+        <td>${_.escape(range.start_date)}</td>
+        <td>${_.escape(range.end_date)}</td>
+        <td><button class="button remove_dates_unavailable" data-id="${_.escape(range.id)}">Remove</button></td>
       </tr>`
       })
       date_unavailable_table.html(rows)

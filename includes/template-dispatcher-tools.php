@@ -278,43 +278,43 @@ $dt_url_path = dt_get_url_path();
                         </div>
                         </div>
                         <div class="bordered-box">
-                        <h3>Availability</h3>
-                        <p>Set the dates you will be unavailable so the Dispatcher will know your availability to receive new contacts</p>
-                        <div style="display: flex; justify-content: space-around; align-items: flex-end">
-                            <div style="flex-shrink: 1">
-                                <div class="section-subheader cell">
-                                    <?php esc_html_e( 'Start Date', 'disciple_tools' )?>
+                            <h3><?php esc_html_e( "Availability", 'disciple_tools' ) ?></h3>
+                            <p><?php esc_html_e( "Set the dates you will be unavailable so the Dispatcher will know your availability to receive new contacts", 'disciple_tools' ) ?></p>
+                            <div style="display: flex; justify-content: space-around; align-items: flex-end">
+                                <div style="flex-shrink: 1">
+                                    <div class="section-subheader cell">
+                                        <?php esc_html_e( 'Start Date', 'disciple_tools' )?>
+                                    </div>
+                                    <div class="start_date"><input type="text" class="date-picker" id="start_date"></div>
                                 </div>
-                                <div class="start_date"><input type="text" class="date-picker" id="start_date"></div>
-                            </div>
-                            <div>
-                            <div class="section-subheader cell">
-                                <?php esc_html_e( 'End Date', 'disciple_tools' )?>
-                            </div>
-                            <div class="end_date"><input type="text" class="date-picker" id="end_date"></div>
-                            </div>
-                            <div>
-                                <button id="add_unavailable_dates" class="button" disabled>Add Unavailable dates</button>
-                                <div id="add_unavailable_dates_spinner" style="display: inline-block" class="loading-spinner"></div>
-                            </div>
+                                <div>
+                                <div class="section-subheader cell">
+                                    <?php esc_html_e( 'End Date', 'disciple_tools' )?>
+                                </div>
+                                <div class="end_date"><input type="text" class="date-picker" id="end_date"></div>
+                                </div>
+                                <div>
+                                    <button id="add_unavailable_dates" class="button" disabled><?php esc_html_e( "Add Unavailable dates", 'disciple_tools' ) ?></button>
+                                    <div id="add_unavailable_dates_spinner" style="display: inline-block" class="loading-spinner"></div>
+                                </div>
 
-                        </div>
-                        <p>Unavailable Dates</p>
-                        <div >
-                            <table>
-                                <thead>
-                                <tr>
-                                    <th>Start date</th>
-                                    <th>End date</th>
-                                    <th></th>
-                                </tr>
-                                </thead>
-                                <tbody id="unavailable-list">
+                            </div>
+                            <p><?php esc_html_e( "Travel or Away Dates", 'disciple_tools' ) ?></p>
+                            <div >
+                                <table>
+                                    <thead>
+                                    <tr>
+                                        <th><?php esc_html_e( "Start date", 'disciple_tools' ) ?></th>
+                                        <th><?php esc_html_e( "End date", 'disciple_tools' ) ?></th>
+                                        <th></th>
+                                    </tr>
+                                    </thead>
+                                    <tbody id="unavailable-list">
 
-                                </tbody>
+                                    </tbody>
 
-                            </table>
-                        </div>
+                                </table>
+                            </div>
                         </div>
                         <div class="bordered-box">
                             <h3>Stats</h3>
