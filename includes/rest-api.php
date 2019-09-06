@@ -132,6 +132,7 @@ class DT_Dispatcher_Tools_Endpoints
             COUNT( CASE WHEN date_assigned.hist_time >= %d THEN 1 END ) as this_year,
             COUNT( date_assigned.histid ) as all_time
             FROM $wpdb->dt_activity_log as date_assigned
+            INNER JOIN $wpdb->postmeta as type ON ( date_assigned.object_id = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
             WHERE date_assigned.meta_key = 'assigned_to' 
                 AND date_assigned.object_type = 'contacts' 
                 AND date_assigned.meta_value = %s
@@ -266,10 +267,10 @@ class DT_Dispatcher_Tools_Endpoints
             from $wpdb->users as users
             INNER JOIN $wpdb->usermeta as um on ( um.user_id = users.ID AND um.meta_key = 'wp_capabilities' AND um.meta_value LIKE %s )
             INNER JOIN $wpdb->postmeta as pm on (pm.meta_key = 'assigned_to' and pm.meta_value = CONCAT( 'user-', users.ID ) )
-            INNER JOIN $wpdb->postmeta as type on (type.post_id = pm.post_id and type.meta_key = 'type' and ( type.meta_value = 'media' OR type.meta_value = 'next_gen' ) )
-            LEFT JOIN $wpdb->postmeta as active on (active.post_id = pm.post_id and active.meta_key = 'overall_status' and active.meta_value = 'active' )
-            LEFT JOIN $wpdb->postmeta as new_assigned on (new_assigned.post_id = pm.post_id and new_assigned.meta_key = 'overall_status' and new_assigned.meta_value = 'assigned' )
-            LEFT JOIN $wpdb->postmeta as update_needed on (update_needed.post_id = pm.post_id and update_needed.meta_key = 'requires_update' and update_needed.meta_value = '1' )
+            LEFT JOIN $wpdb->postmeta as type on (type.post_id = pm.post_id and type.meta_key = 'type' and ( type.meta_value = 'media' OR type.meta_value = 'next_gen' ) )
+            LEFT JOIN $wpdb->postmeta as active on (active.post_id = type.post_id and active.meta_key = 'overall_status' and active.meta_value = 'active' )
+            LEFT JOIN $wpdb->postmeta as new_assigned on (new_assigned.post_id = type.post_id and new_assigned.meta_key = 'overall_status' and new_assigned.meta_value = 'assigned' )
+            LEFT JOIN $wpdb->postmeta as update_needed on (update_needed.post_id = type.post_id and update_needed.meta_key = 'requires_update' and update_needed.meta_value = '1' )
             GROUP by users.ID", '%multiplier%' ),
         ARRAY_A );
 
@@ -392,6 +393,7 @@ class DT_Dispatcher_Tools_Endpoints
             COUNT( CASE WHEN date_assigned.hist_time >= %d THEN 1 END ) as this_year,
             COUNT( date_assigned.histid ) as all_time
             FROM $wpdb->dt_activity_log as date_assigned
+            INNER JOIN $wpdb->postmeta as type ON ( date_assigned.object_id = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
             WHERE date_assigned.meta_key = 'assigned_to'
                 AND date_assigned.object_type = 'contacts' 
                 AND date_assigned.old_value <> ''
@@ -655,14 +657,16 @@ class DT_Dispatcher_Tools_Endpoints
                 SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as status FROM $wpdb->posts p
                 INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
                 INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'overall_status' )
+                INNER JOIN $wpdb->postmeta as type ON ( p.ID = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
                 WHERE p.post_type = 'contacts'
                 GROUP BY pm1.meta_value
             ", 'user-' . $user_id ), ARRAY_A );
         } else {
             $contact_statuses = $wpdb->get_results( "
-                SELECT COUNT(meta_value) as count, meta_value as status FROM $wpdb->postmeta 
-                WHERE meta_key = 'overall_status'
-                GROUP BY meta_value
+                SELECT COUNT(pm.meta_value) as count, pm.meta_value as status FROM $wpdb->postmeta pm
+                INNER JOIN $wpdb->postmeta as type ON ( pm.post_id = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
+                WHERE pm.meta_key = 'overall_status'
+                GROUP BY pm.meta_value
             ", ARRAY_A );
         }
         if ( $user_id ){
@@ -670,14 +674,16 @@ class DT_Dispatcher_Tools_Endpoints
                 SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as reason FROM $wpdb->posts p
                 INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
                 INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'reason_closed' )
+                INNER JOIN $wpdb->postmeta as type ON ( p.ID = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
                 WHERE p.post_type = 'contacts'
                 GROUP BY pm1.meta_value
             ", 'user-' . $user_id ), ARRAY_A );
         } else {
             $reason_closed = $wpdb->get_results( "
-                SELECT COUNT(meta_value) as count, meta_value as reason FROM $wpdb->postmeta 
-                WHERE meta_key = 'reason_closed'
-                GROUP BY meta_value
+                SELECT COUNT(pm.meta_value) as count, pm.meta_value as reason FROM $wpdb->postmeta pm
+                INNER JOIN $wpdb->postmeta as type ON ( pm.post_id = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
+                WHERE pm.meta_key = 'reason_closed'
+                GROUP BY pm.meta_value
             ", ARRAY_A );
         }
         foreach ( $reason_closed as &$reason ){
@@ -693,13 +699,15 @@ class DT_Dispatcher_Tools_Endpoints
                 SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as reason FROM $wpdb->posts p
                 INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
                 INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'reason_paused' )
+                INNER JOIN $wpdb->postmeta as type ON ( p.ID = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
                 GROUP BY pm1.meta_value
             ", 'user-' . $user_id ), ARRAY_A );
         } else {
             $reason_paused = $wpdb->get_results( "
-                SELECT COUNT(meta_value) as count, meta_value as reason FROM $wpdb->postmeta 
-                WHERE meta_key = 'reason_paused'
-                GROUP BY meta_value
+                SELECT COUNT(pm.meta_value) as count, pm.meta_value as reason FROM $wpdb->postmeta pm
+                INNER JOIN $wpdb->postmeta as type ON ( pm.post_id = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
+                WHERE pm.meta_key = 'reason_paused'
+                GROUP BY pm.meta_value
             ", ARRAY_A );
         }
         foreach ( $reason_paused as &$reason ){
@@ -715,13 +723,15 @@ class DT_Dispatcher_Tools_Endpoints
                 SELECT COUNT(pm1.meta_value) as count, pm1.meta_value as reason FROM $wpdb->posts p
                 INNER JOIN $wpdb->postmeta pm ON ( pm.post_id = p.ID AND pm.meta_key = 'assigned_to' AND pm.meta_value = %s )
                 INNER JOIN $wpdb->postmeta pm1 ON ( pm1.post_id = p.ID AND pm1.meta_key = 'reason_unassignable' )
+                INNER JOIN $wpdb->postmeta as type ON ( p.ID = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
                 GROUP BY pm1.meta_value
             ", 'user-' . $user_id ), ARRAY_A );
         } else {
             $reason_unassignable = $wpdb->get_results( "
-                SELECT COUNT(meta_value) as count, meta_value as reason FROM $wpdb->postmeta 
-                WHERE meta_key = 'reason_unassignable'
-                GROUP BY meta_value
+                SELECT COUNT(pm.meta_value) as count, pm.meta_value as reason FROM $wpdb->postmeta pm
+                INNER JOIN $wpdb->postmeta as type ON ( pm.post_id = type.post_id AND type.meta_key = 'type' AND type.meta_value != 'user' )
+                WHERE pm.meta_key = 'reason_unassignable'
+                GROUP BY pm.meta_value
             ", ARRAY_A );
         }
         foreach ( $reason_unassignable  as &$reason ){
