@@ -51,6 +51,14 @@ class DT_Dispatcher_Tools_Endpoints
                 ],
             ]
         );
+        register_rest_route(
+            $namespace, '/get_users', [
+                [
+                    'methods'  => "GET",
+                    'callback' => [ $this, 'get_users_endpoints' ],
+                ],
+            ]
+        );
     }
 
 
@@ -251,8 +259,17 @@ class DT_Dispatcher_Tools_Endpoints
         return $my_active_contacts;
     }
 
-    public static function get_users() {
-        if ( get_transient( 'dispatcher_user_data' ) ) {
+    public function get_users_endpoints( WP_REST_Request $request ){
+        if ( !$this->has_permission() ){
+            return new WP_Error( "get_user", "Missing Permissions", [ 'status' => 401 ] );
+        }
+        $params = $request->get_params();
+        $refresh = isset( $params["refresh"] ) && $params["refresh"] = "1";
+        return self::get_users( $refresh );
+    }
+
+    public static function get_users( $refresh = false) {
+        if ( !$refresh && get_transient( 'dispatcher_user_data' ) ) {
             return maybe_unserialize( get_transient( 'dispatcher_user_data' ) );
         }
 

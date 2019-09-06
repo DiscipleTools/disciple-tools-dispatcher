@@ -48,6 +48,7 @@ $dt_url_path = dt_get_url_path();
                     <?php if ( strpos( $dt_url_path, 'dispatcher-tools/multipliers' ) !== false ) :
                         $users = DT_Dispatcher_Tools_Endpoints::get_users(); ?>
                         <h3>Multipliers</h3>
+                        <p><a href="#" id="refresh_cached_data">Refresh cached data</a><span id="loading-page" class="loading-spinner"></span></p>
                         <div style="display: inline-block" class="loading-spinner users-spinner"></div>
                         <table id="multipliers_table" class="display">
                             <thead>

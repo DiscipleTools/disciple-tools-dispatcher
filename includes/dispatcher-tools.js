@@ -168,22 +168,16 @@ jQuery(document).ready(function($) {
           activity_div.html(activity_html)
         })
     }
-    // if ( !isNaN( dtDispatcherTools.url_path.replace('dispatcher-tools/multipliers/', '' ) ) ){
-    //   user_id = dtDispatcherTools.url_path.replace('dispatcher-tools/multipliers/', '' )
-    //   open_multiplier_modal(user_id)
-    // }
+
+    $('#refresh_cached_data').on('click', function () {
+      $('#loading-page').addClass('active')
+      makeRequest( "get", `get_users?refresh=1`, null , 'dispatcher-tools/v1/').then(()=>{
+        location.reload()
+      })
+    })
 
     $('.user_row').on("click", function () {
       user_id = $(this).data("user")
-      // if ( dtDispatcherTools.url_path === 'dispatcher-tools/multipliers' ) {
-      //   location.href = `${location.href}?user-id=${user_id}`
-      // }
-      // let modal_user_list = ''
-      // $('#multipliers_table tbody tr td:nth-child(1)').each(function (cell, a, b) {
-      //   modal_user_list += `<a href="${$(a).data('user')}">${$(a).text()}</a>`
-      // })
-      // $('.sidenav').html(modal_user_list);
-
       open_multiplier_modal(user_id)
     })
 
