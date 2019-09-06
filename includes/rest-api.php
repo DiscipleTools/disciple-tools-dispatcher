@@ -183,7 +183,7 @@ class DT_Dispatcher_Tools_Endpoints
         foreach ( $days_active_results as $a ){
             $days_active[$a["day"]] = $a;
         }
-        $first = strtotime( $days_active_results[0]['day'] );
+        $first = isset( $days_active_results[0]['day'] ) ? strtotime( $days_active_results[0]['day'] ) : time();
         $first_week_start = date( 'Y-m-d', strtotime( '-' . date( 'w', $first )  . ' days', $first ) );
         $current = strtotime( $first_week_start );
         $daily_activity = [];
