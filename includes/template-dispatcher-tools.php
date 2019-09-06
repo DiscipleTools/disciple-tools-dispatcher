@@ -79,7 +79,9 @@ $dt_url_path = dt_get_url_path();
                                 </td>
                                 <td><?php echo esc_html( $user["number_active"] ) ?></td>
                                 <td data-sort="<?php echo esc_html( $user["last_activity"] ?? "" ) ?>">
-                                    <?php if ( $user["last_activity"] ?? time() < time() - 60 * 60 * 24 * 90 ) : ?>
+                                    <?php if ( !isset( $user["last_activity"] ) ) :
+                                        esc_html_e( "No activity", 'disciple_tools' );
+                                    elseif ( $user["last_activity"] < time() - 60 * 60 * 24 * 90 ) : ?>
                                         <img src="<?php echo esc_html( get_template_directory_uri() . '/dt-assets/images/broken.svg' )?>" />
                                     <?php endif; ?>
                                     <?php echo esc_html( dt_format_date( $user["last_activity"] ?? "" ) ) ?>
