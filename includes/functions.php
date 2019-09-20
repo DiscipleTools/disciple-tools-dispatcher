@@ -2,7 +2,7 @@
 
 class DT_Dispatcher_Tools_Functions
 {
-    public $permissions = [ 'list_users' ];
+    public $permissions = [ 'edit_users' ];
 
     private static $_instance = null;
     public static function instance() {
