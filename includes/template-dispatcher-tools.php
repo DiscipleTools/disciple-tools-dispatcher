@@ -189,7 +189,7 @@ $dt_url_path = dt_get_url_path();
             <span style="display: inline-block" class="loading-spinner users-spinner"></span>
             <div id="user_modal_content">
 
-                <h1 id="user_name" style="display: inline-block"><?php esc_html_e( "Multiplier name", 'disciple_tools' ) ?></h1>
+                <h1 id="user_name" style="display: inline-block"><?php esc_html_e( "Multiplier Name", 'disciple_tools' ) ?></h1>
                 <button class="button" data-close aria-label="Close reveal" type="button" style="margin-left:30px">
                     <span aria-hidden="true">Return to list</span>
                 </button>
@@ -223,7 +223,7 @@ $dt_url_path = dt_get_url_path();
                     </div>
                     <div class="bordered-box">
                         <div class="section-subheader">
-                            <?php esc_html_e( 'Unread notifications', 'disciple_tools' )?>
+                            <?php esc_html_e( 'Unread Notifications', 'disciple_tools' )?>
                         </div>
                         <p style="text-align: center" id="unread_notifications"></p>
                     </div>
@@ -233,7 +233,7 @@ $dt_url_path = dt_get_url_path();
                             <li>This month: <span id="assigned_this_month"></span></li>
                             <li>Last month: <span id="assigned_last_month"></span></li>
                             <li>This year: <span id="assigned_this_year"></span></li>
-                            <li>Last year year: <span id="assigned_all_time"></span></li>
+                            <li>Last year: <span id="assigned_all_time"></span></li>
                         </ul>
                     </div>
 
@@ -254,7 +254,7 @@ $dt_url_path = dt_get_url_path();
                             </select>
                         </div>
                         <div class="bordered-box">
-                            <h3>Workload status</h3>
+                            <h3>Workload Status</h3>
                             <select id="workload-select" class="user-select">
                             <?php $workload_status_options = dt_get_site_custom_lists()["user_workload_status"] ?? [] ?>
                                 <option></option>
