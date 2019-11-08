@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: Disciple Tools - Dispatcher tools
+ * Plugin Name: Disciple Tools - Dispatcher Tools
  * Plugin URI: https://github.com/DiscipleTools/disciple-tools-dispatcher-tools
- * Description: Disciple Tools - Dispatcher tools is intended to help developers and integrator jumpstart their extension
+ * Description: Disciple Tools - Dispatcher Tools is intended to help developers and integrator jumpstart their extension
  * of the Disciple Tools system.
  * Version:  0.1.0
  * Author URI: https://github.com/DiscipleTools
@@ -18,7 +18,7 @@
  */
 
 /*******************************************************************
- * Using the Dispatcher tools
+ * Using the Dispatcher Tools
  * The Disciple Tools dispatcher tools is intended to accelerate integrations and extensions to the Disciple Tools system.
  * This basic plugin dispatch_Tools has some of the basic elements to quickly launch and extension project in the pattern of
  * the Disciple Tools system.
@@ -26,7 +26,7 @@
 
 /**
  * Refactoring (renaming) this plugin as your own:
- * 1. Refactor all occurrences of the name DT_Dispatch_Tools, dt_dispatcher_tools, dt-dispatcher-tools and Dispatcher tools with you're own
+ * 1. Refactor all occurrences of the name DT_Dispatch_Tools, dt_dispatcher_tools, dt-dispatcher-tools and Dispatcher Tools with you're own
  * name for the `disciple-tools-dispatcher-tools.php and menu-and-tabs.php files.
  * 2. Update the README.md and LICENSE
  * 3. Update the default.pot file if you intend to make your plugin multilingual. Use a tool like POEdit
@@ -309,7 +309,7 @@ function dt_dispatcher_tools_hook_admin_notice() {
     global $dt_dispatcher_tools_required_dt_theme_version;
     $wp_theme = wp_get_theme();
     $current_version = $wp_theme->version;
-    $message = __( "'Disciple Tools - Dispatcher tools' plugin requires 'Disciple Tools' theme to work. Please activate 'Disciple Tools' theme or make sure it is latest version.", "dt_dispatcher_tools" );
+    $message = __( "'Disciple Tools - Dispatcher Tools' plugin requires 'Disciple Tools' theme to work. Please activate 'Disciple Tools' theme or make sure it is latest version.", "dt_dispatcher_tools" );
     if ( $wp_theme->get_template() === "disciple-tools-theme" ){
         $message .= sprintf( esc_html__( 'Current Disciple Tools version: %1$s, required version: %2$s', 'dt_dispatcher_tools' ), esc_html( $current_version ), esc_html( $dt_dispatcher_tools_required_dt_theme_version ) );
     }

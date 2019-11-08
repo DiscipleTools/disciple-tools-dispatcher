@@ -60,7 +60,7 @@ class DT_Dispatcher_Tools_Menu {
      */
     public function register_menu() {
         add_menu_page( __( 'Extensions (DT)', 'disciple_tools' ), __( 'Extensions (DT)', 'disciple_tools' ), 'manage_dt', 'dt_extensions', [ $this, 'extensions_menu' ], 'dashicons-admin-generic', 59 );
-        add_submenu_page( 'dt_extensions', __( 'Dispatcher tools', 'dt_dispatcher_tools' ), __( 'Dispatcher tools', 'dt_dispatcher_tools' ), 'manage_dt', $this->token, [ $this, 'content' ] );
+        add_submenu_page( 'dt_extensions', __( 'Dispatcher Tools', 'dt_dispatcher_tools' ), __( 'Dispatcher Tools', 'dt_dispatcher_tools' ), 'manage_dt', $this->token, [ $this, 'content' ] );
     }
 
     /**
@@ -88,7 +88,7 @@ class DT_Dispatcher_Tools_Menu {
 
         ?>
         <div class="wrap">
-            <h2><?php esc_attr_e( 'Dispatcher tools', 'dt_dispatcher_tools' ) ?></h2>
+            <h2><?php esc_attr_e( 'Dispatcher Tools', 'dt_dispatcher_tools' ) ?></h2>
             <h2 class="nav-tab-wrapper">
                 <a href="<?php echo esc_attr( $link ) . 'general' ?>" class="nav-tab <?php ( $tab == 'general' || ! isset( $tab ) ) ? esc_attr_e( 'nav-tab-active', 'dt_dispatcher_tools' ) : print ''; ?>"><?php esc_attr_e( 'General', 'dt_dispatcher_tools' ) ?></a>
                 <a href="<?php echo esc_attr( $link ) . 'second' ?>" class="nav-tab <?php ( $tab == 'second' ) ? esc_attr_e( 'nav-tab-active', 'dt_dispatcher_tools' ) : print ''; ?>"><?php esc_attr_e( 'Second', 'dt_dispatcher_tools' ) ?></a>

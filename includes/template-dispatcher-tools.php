@@ -1,6 +1,6 @@
 <?php
 /*
-Template Name: Dispatcher tools
+Template Name: Dispatcher Tools
 */
 if ( ! current_user_can( 'access_contacts' ) ) {
     wp_safe_redirect( '/settings' );
