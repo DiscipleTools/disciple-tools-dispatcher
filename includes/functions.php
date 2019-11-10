@@ -46,18 +46,16 @@ class DT_Dispatcher_Tools_Functions
 
     public function add_nav_bar_link(){
         if ( current_user_can( 'view_any_contacts' ) ) : ?>
-            <li><a href="<?php echo esc_url( site_url( '/dispatcher-tools/' ) ); ?>"><?php echo esc_html( "Dispatcher Tools" ); ?></a></li>
+            <li><a href="<?php echo esc_url( site_url( '/dispatcher-tools/' ) ); ?>"><?php echo esc_html( "Dispatcher" ); ?></a></li>
         <?php endif;
     }
 
 
     public function add_menu( $content ) {
         $content .= '<li>
-            <a href="'. site_url( '/dispatcher-tools/dash' ) .'" >' .  esc_html__( 'Dash', 'disciple_tools' ) . '</a>
+            <a href="'. site_url( '/dispatcher-tools/dash' ) .'" >' .  esc_html__( 'Overview', 'disciple_tools' ) . '</a>
             <a href="'. site_url( '/dispatcher-tools/multipliers' ) .'" >' .  esc_html__( 'Multipliers', 'disciple_tools' ) . '</a>
         </li>';
-//            <a href="'. site_url( '/dispatcher-tools/coverage' ) .'" >' .  esc_html__( 'Coverage', 'disciple_tools' ) . '</a>
-//            <a href="'. site_url( '/dispatcher-tools/fungus' ) .'" >' .  esc_html__( 'Fungus', 'disciple_tools' ) . '</a>
         return $content;
     }
 
