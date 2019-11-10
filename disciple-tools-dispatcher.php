@@ -1,10 +1,10 @@
 <?php
 /**
- * Plugin Name: Disciple Tools - Dispatcher Tools
+ * Plugin Name: Disciple Tools - Dispatcher
  * Plugin URI: https://github.com/DiscipleTools/disciple-tools-dispatcher-tools
- * Description: Disciple Tools - Dispatcher Tools is intended to help developers and integrator jumpstart their extension
+ * Description: Disciple Tools - Dispatcher Tools adds bulk dispatcher features to Disciple Tools
  * of the Disciple Tools system.
- * Version:  0.1.0
+ * Version:  0.2.0
  * Author URI: https://github.com/DiscipleTools
  * GitHub Plugin URI: https://github.com/DiscipleTools/disciple-tools-dispatcher-tools
  * Requires at least: 4.7.0
@@ -51,7 +51,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $dt_dispatcher_tools_required_dt_theme_version = '0.19.0';
 
 /**
- * Gets the instance of the `DT_Dispatcher_Tools` class.
+ * Gets the instance of the `DT_Dispatcher` class.
  *
  * @since  0.1
  * @access public
@@ -78,12 +78,9 @@ function dt_dispatcher_tools() {
     /*
      * Don't load the plugin on every rest request. Only those with the 'sample' namespace
      */
-    $is_rest = dt_is_rest();
-//    if ( !$is_rest || strpos( dt_get_url_path(), 'sample' ) != false ){
-//    }
-    DT_Dispatcher_Tools::get_instance();
+    return DT_Dispatcher::get_instance();
 }
-add_action( 'plugins_loaded', 'dt_dispatcher_tools' );
+add_action( 'after_setup_theme', 'dt_dispatcher_tools' );
 
 /**
  * Singleton class for setting up the plugin.
@@ -91,7 +88,7 @@ add_action( 'plugins_loaded', 'dt_dispatcher_tools' );
  * @since  0.1
  * @access public
  */
-class DT_Dispatcher_Tools {
+class DT_Dispatcher {
 
     /**
      * Declares public variables
@@ -119,7 +116,7 @@ class DT_Dispatcher_Tools {
         static $instance = null;
 
         if ( is_null( $instance ) ) {
-            $instance = new dt_dispatcher_tools();
+            $instance = new DT_Dispatcher();
             $instance->setup();
             $instance->includes();
             $instance->setup_actions();
@@ -173,9 +170,9 @@ class DT_Dispatcher_Tools {
 
         // sample rest api class
         require_once( 'includes/rest-api.php' );
-        DT_Dispatcher_Tools_Endpoints::instance();
+        DT_Dispatcher_Endpoints::instance();
         require_once( 'includes/functions.php' );
-        DT_Dispatcher_Tools_Functions::instance();
+        DT_Dispatcher_Functions::instance();
     }
 
     /**
@@ -302,8 +299,8 @@ class DT_Dispatcher_Tools {
 // end main plugin class
 
 // Register activation hook.
-register_activation_hook( __FILE__, [ 'DT_Dispatcher_Tools', 'activation' ] );
-register_deactivation_hook( __FILE__, [ 'DT_Dispatcher_Tools', 'deactivation' ] );
+register_activation_hook( __FILE__, [ 'DT_Dispatcher', 'activation' ] );
+register_deactivation_hook( __FILE__, [ 'DT_Dispatcher', 'deactivation' ] );
 
 function dt_dispatcher_tools_hook_admin_notice() {
     global $dt_dispatcher_tools_required_dt_theme_version;

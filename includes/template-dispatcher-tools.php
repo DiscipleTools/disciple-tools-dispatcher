@@ -46,7 +46,7 @@ $dt_url_path = dt_get_url_path();
 
                     <div id="chart">
                     <?php if ( strpos( $dt_url_path, 'dispatcher-tools/multipliers' ) !== false ) :
-                        $users = DT_Dispatcher_Tools_Endpoints::get_users(); ?>
+                        $users = DT_Dispatcher_Endpoints::get_users(); ?>
                         <h3>Multipliers</h3>
                         <p><a href="#" id="refresh_cached_data">Refresh cached data</a><span id="loading-page" class="loading-spinner"></span></p>
                         <div style="display: inline-block" class="loading-spinner users-spinner"></div>
@@ -96,7 +96,7 @@ $dt_url_path = dt_get_url_path();
 
 
                     <?php if ( $dt_url_path === 'dispatcher-tools' || strpos( $dt_url_path, 'dispatcher-tools/dash' ) !== false ) :
-                        $dash_stats = DT_Dispatcher_Tools_Endpoints::get_dash_stats(); ?>
+                        $dash_stats = DT_Dispatcher_Endpoints::get_dash_stats(); ?>
                         <h3 class="section-header"><?php esc_html_e( "Contacts", 'disciple_tools' ) ?></h3>
                         <div class="center callout">
                             <div class="grid-x">

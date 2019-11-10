@@ -1,8 +1,8 @@
 <?php
 /**
- * DT_Dispatcher_Tools_Menu class for the admin page
+ * DT_Dispatcher_Menu class for the admin page
  *
- * @class       DT_Dispatcher_Tools_Menu
+ * @class       DT_Dispatcher_Menu
  * @version     0.1.0
  * @since       0.1.0
  */
@@ -14,25 +14,25 @@ if ( ! defined( 'ABSPATH' ) ) { exit; // Exit if accessed directly
 /**
  * Initialize menu class
  */
-DT_Dispatcher_Tools_Menu::instance();
+DT_Dispatcher_Menu::instance();
 
 /**
- * Class DT_Dispatcher_Tools_Menu
+ * Class DT_Dispatcher_Menu
  */
-class DT_Dispatcher_Tools_Menu {
+class DT_Dispatcher_Menu {
 
     public $token = 'dt_dispatcher_tools';
 
     private static $_instance = null;
 
     /**
-     * DT_Dispatcher_Tools_Menu Instance
+     * DT_Dispatcher_Menu Instance
      *
-     * Ensures only one instance of DT_Dispatcher_Tools_Menu is loaded or can be loaded.
+     * Ensures only one instance of DT_Dispatcher_Menu is loaded or can be loaded.
      *
      * @since 0.1.0
      * @static
-     * @return DT_Dispatcher_Tools_Menu instance
+     * @return DT_Dispatcher_Menu instance
      */
     public static function instance() {
         if ( is_null( self::$_instance ) ) {

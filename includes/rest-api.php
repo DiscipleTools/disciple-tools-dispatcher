@@ -4,7 +4,7 @@
  */
 
 
-class DT_Dispatcher_Tools_Endpoints
+class DT_Dispatcher_Endpoints
 {
     public $permissions = [ 'list_users' ];
 
