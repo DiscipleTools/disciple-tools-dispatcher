@@ -1,9 +1,9 @@
 jQuery(document).ready(function($) {
 
-  if ( window.location.href.includes('dash') ){
-    dashboard_js()
-  } else if ( window.location.href.includes('multipliers') ){
+  if ( window.location.href.includes('multipliers') ){
     multipliers_js()
+  } else {
+    dashboard_js()
   }
 
 

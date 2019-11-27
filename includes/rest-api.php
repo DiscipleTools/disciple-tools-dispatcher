@@ -239,23 +239,23 @@ class DT_Dispatcher_Endpoints
         global $wpdb;
         $my_active_contacts = $wpdb->get_var( $wpdb->prepare( "
             SELECT count(a.ID)
-              FROM $wpdb->posts as a
-              INNER JOIN $wpdb->postmeta as assigned_to
-                ON a.ID=assigned_to.post_id
-                  AND assigned_to.meta_key = 'assigned_to'
-                  AND assigned_to.meta_value = CONCAT( 'user-', %s )
-                JOIN $wpdb->postmeta as b
-                  ON a.ID=b.post_id
-                     AND b.meta_key = 'overall_status'
-                         AND b.meta_value = 'active'
-                INNER JOIN $wpdb->postmeta as e
-                  ON a.ID=e.post_id
-                     AND (( e.meta_key = 'type'
-                            AND ( e.meta_value = 'media' OR e.meta_value = 'next_gen' ) )
-                          OR e.meta_key IS NULL)
-              WHERE a.post_status = 'publish'
-              AND post_type = 'contacts'
-              ", get_current_user_id() ) );
+            FROM $wpdb->posts as a
+            INNER JOIN $wpdb->postmeta as assigned_to
+            ON a.ID=assigned_to.post_id
+              AND assigned_to.meta_key = 'assigned_to'
+              AND assigned_to.meta_value = CONCAT( 'user-', %s )
+            JOIN $wpdb->postmeta as b
+              ON a.ID=b.post_id
+                 AND b.meta_key = 'overall_status'
+                     AND b.meta_value = 'active'
+            WHERE a.post_status = 'publish'
+            AND post_type = 'contacts'
+            WHERE a.ID NOT IN (
+                SELECT post_id FROM $wpdb->postmeta
+                WHERE meta_key = 'corresponds_to_user' AND meta_value != 0
+                GROUP BY post_id
+            )
+        ", get_current_user_id() ) );
         return $my_active_contacts;
     }
 
@@ -284,10 +284,16 @@ class DT_Dispatcher_Endpoints
             from $wpdb->users as users
             INNER JOIN $wpdb->usermeta as um on ( um.user_id = users.ID AND um.meta_key = 'wp_capabilities' AND um.meta_value LIKE %s )
             INNER JOIN $wpdb->postmeta as pm on (pm.meta_key = 'assigned_to' and pm.meta_value = CONCAT( 'user-', users.ID ) )
-            LEFT JOIN $wpdb->postmeta as type on (type.post_id = pm.post_id and type.meta_key = 'type' and ( type.meta_value = 'media' OR type.meta_value = 'next_gen' ) )
-            LEFT JOIN $wpdb->postmeta as active on (active.post_id = type.post_id and active.meta_key = 'overall_status' and active.meta_value = 'active' )
-            LEFT JOIN $wpdb->postmeta as new_assigned on (new_assigned.post_id = type.post_id and new_assigned.meta_key = 'overall_status' and new_assigned.meta_value = 'assigned' )
-            LEFT JOIN $wpdb->postmeta as update_needed on (update_needed.post_id = type.post_id and update_needed.meta_key = 'requires_update' and update_needed.meta_value = '1' )
+            INNER JOIN $wpdb->posts as p on ( p.ID = pm.post_id and p.post_type = 'contacts' )
+            LEFT JOIN $wpdb->postmeta as active on (active.post_id = p.ID and active.meta_key = 'overall_status' and active.meta_value = 'active' )
+            LEFT JOIN $wpdb->postmeta as new_assigned on (new_assigned.post_id = p.ID and new_assigned.meta_key = 'overall_status' and new_assigned.meta_value = 'assigned' )
+            LEFT JOIN $wpdb->postmeta as update_needed on (update_needed.post_id = p.ID and update_needed.meta_key = 'requires_update' and update_needed.meta_value = '1' )
+            WHERE p.ID NOT IN (
+                SELECT post_id
+                FROM $wpdb->postmeta
+                WHERE meta_key = 'corresponds_to_user' AND meta_value != 0
+                GROUP BY post_id
+            )
             GROUP by users.ID", '%multiplier%' ),
         ARRAY_A );
 
