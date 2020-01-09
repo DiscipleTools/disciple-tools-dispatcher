@@ -271,7 +271,7 @@ $dt_url_path = dt_get_url_path();
                                 <div class="typeahead__container">
                                     <div class="typeahead__field">
                                         <span class="typeahead__query">
-                                            <input class="js-typeahead-location_grid"
+                                            <input class="js-typeahead-location_grid input-height"
                                                    name="location_grid[query]" placeholder="<?php esc_html_e( "Search Locations", 'disciple_tools' ) ?>"
                                                    autocomplete="off">
                                         </span>
