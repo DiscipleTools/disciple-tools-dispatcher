@@ -250,7 +250,7 @@ class DT_Dispatcher_Endpoints
                      AND b.meta_value = 'active'
             WHERE a.post_status = 'publish'
             AND post_type = 'contacts'
-            WHERE a.ID NOT IN (
+            AND a.ID NOT IN (
                 SELECT post_id FROM $wpdb->postmeta
                 WHERE meta_key = 'type' AND meta_value = 'user'
                 GROUP BY post_id
