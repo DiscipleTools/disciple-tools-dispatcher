@@ -282,7 +282,7 @@ class DT_Dispatcher_Endpoints
                 count(new_assigned.post_id) as number_new_assigned,
                 count(update_needed.post_id) as number_update
             from $wpdb->users as users
-            INNER JOIN $wpdb->usermeta as um on ( um.user_id = users.ID AND um.meta_key = 'wp_capabilities' AND um.meta_value LIKE %s )
+            INNER JOIN $wpdb->usermeta as um on ( um.user_id = users.ID AND um.meta_key = %s AND um.meta_value LIKE %s )
             INNER JOIN $wpdb->postmeta as pm on (pm.meta_key = 'assigned_to' and pm.meta_value = CONCAT( 'user-', users.ID ) )
             INNER JOIN $wpdb->posts as p on ( p.ID = pm.post_id and p.post_type = 'contacts' )
             LEFT JOIN $wpdb->postmeta as active on (active.post_id = p.ID and active.meta_key = 'overall_status' and active.meta_value = 'active' )
@@ -294,7 +294,7 @@ class DT_Dispatcher_Endpoints
                 WHERE meta_key = 'type' AND meta_value = 'user'
                 GROUP BY post_id
             )
-            GROUP by users.ID", '%multiplier%' ),
+            GROUP by users.ID", $wpdb->prefix . 'capabilities', '%multiplier%' ),
         ARRAY_A );
 
         $users = [];
