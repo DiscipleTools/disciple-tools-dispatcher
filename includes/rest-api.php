@@ -6,7 +6,7 @@
 
 class DT_Dispatcher_Endpoints
 {
-    public $permissions = [ 'list_users' ];
+    public $permissions = [ 'list_users', 'manage_dt' ];
 
     private static $_instance = null;
     public static function instance() {
@@ -39,7 +39,7 @@ class DT_Dispatcher_Endpoints
             $namespace, '/user', [
                 [
                     'methods'  => "GET",
-                    'callback' => [ $this, 'get_user' ],
+                    'callback' => [ $this, 'get_user_endpoint' ],
                 ],
             ]
         );
@@ -61,19 +61,9 @@ class DT_Dispatcher_Endpoints
         );
     }
 
-
-    public function get_user( WP_REST_Request $request ) {
-        if ( !$this->has_permission() ){
-            return new WP_Error( "get_user", "Missing Permissions", [ 'status' => 401 ] );
-        }
+    public function get_dt_user( $user_id ) {
         global $wpdb;
-
-        $params = $request->get_params();
-        if ( !isset( $params["user"] ) ) {
-            return new WP_Error( "get_user", "Missing user id", [ 'status' => 400 ] );
-        }
-
-        $user = get_user_by( "ID", $params["user"] );
+        $user = get_user_by( "ID", $user_id );
 
         $user_status = get_user_option( 'user_status', $user->ID );
         $workload_status = get_user_option( 'workload_status', $user->ID );
@@ -88,6 +78,10 @@ class DT_Dispatcher_Endpoints
         }
 
         $dates_unavailable = get_user_option( "user_dates_unavailable", $user->ID );
+        foreach ( $dates_unavailable as &$range ) {
+            $range["start_date"] = dt_format_date( $range["start_date"] );
+            $range["end_date"] = dt_format_date( $range["end_date"] );
+        }
         $user_activity = $wpdb->get_results( $wpdb->prepare("
             SELECT * from $wpdb->dt_activity_log
             WHERE user_id = %s
@@ -215,7 +209,7 @@ class DT_Dispatcher_Endpoints
 
         $contact_statuses = $this->get_contact_statuses( $user->ID );
 
-        return [
+        $user_response = [
             "display_name" => $user->display_name,
             "user_status" => $user_status,
             "workload_status" => $workload_status,
@@ -232,7 +226,25 @@ class DT_Dispatcher_Endpoints
             "contact_statuses" => $contact_statuses
         ];
 
+        if ( current_user_can( "promote_users" ) ){
+            $user_response["roles"] = $user->roles;
+        }
 
+        return $user_response;
+
+
+    }
+
+    public function get_user_endpoint( WP_REST_Request $request ) {
+        if ( !$this->has_permission() ) {
+            return new WP_Error( "get_user", "Missing Permissions", [ 'status' => 401 ] );
+        }
+
+        $params = $request->get_params();
+        if ( !isset( $params["user"] ) ) {
+            return new WP_Error( "get_user", "Missing user id", [ 'status' => 400 ] );
+        }
+        return $this->get_dt_user( $params["user"] );
     }
 
     private static function count_active_contacts(){
@@ -268,76 +280,92 @@ class DT_Dispatcher_Endpoints
         return self::get_users( $refresh );
     }
 
-    public static function get_users( $refresh = false) {
-        if ( !$refresh && get_transient( 'dispatcher_user_data' ) ) {
-            return maybe_unserialize( get_transient( 'dispatcher_user_data' ) );
-        }
-
-        global $wpdb;
-        $user_data = $wpdb->get_results( $wpdb->prepare( "
-            SELECT users.ID,
-                users.display_name,
-                count(pm.post_id) as number_assigned_to,
-                count(active.post_id) as number_active,
-                count(new_assigned.post_id) as number_new_assigned,
-                count(update_needed.post_id) as number_update
-            from $wpdb->users as users
-            INNER JOIN $wpdb->usermeta as um on ( um.user_id = users.ID AND um.meta_key = %s AND um.meta_value LIKE %s )
-            INNER JOIN $wpdb->postmeta as pm on (pm.meta_key = 'assigned_to' and pm.meta_value = CONCAT( 'user-', users.ID ) )
-            INNER JOIN $wpdb->posts as p on ( p.ID = pm.post_id and p.post_type = 'contacts' )
-            LEFT JOIN $wpdb->postmeta as active on (active.post_id = p.ID and active.meta_key = 'overall_status' and active.meta_value = 'active' )
-            LEFT JOIN $wpdb->postmeta as new_assigned on (new_assigned.post_id = p.ID and new_assigned.meta_key = 'overall_status' and new_assigned.meta_value = 'assigned' )
-            LEFT JOIN $wpdb->postmeta as update_needed on (update_needed.post_id = p.ID and update_needed.meta_key = 'requires_update' and update_needed.meta_value = '1' )
-            WHERE p.ID NOT IN (
-                SELECT post_id
-                FROM $wpdb->postmeta
-                WHERE meta_key = 'type' AND meta_value = 'user'
-                GROUP BY post_id
-            )
-            GROUP by users.ID", $wpdb->prefix . 'capabilities', '%multiplier%' ),
-        ARRAY_A );
-
+    public static function get_users( $refresh = false ) {
         $users = [];
-        foreach ( $user_data as $user ) {
-            $users[ $user["ID"] ] = $user;
+        if ( !$refresh && get_transient( 'dispatcher_user_data' ) ) {
+            $users = maybe_unserialize( get_transient( 'dispatcher_user_data' ) );
         }
-        $user_statuses = $wpdb->get_results( $wpdb->prepare( "
-            SELECT * FROM $wpdb->usermeta
-            WHERE meta_key = %s
-        ", $wpdb->prefix . 'user_status' ), ARRAY_A );
-        foreach ( $user_statuses as $meta_row ){
-            if ( isset( $users[ $meta_row["user_id"] ] ) ) {
-                $users[$meta_row["user_id"]]["user_status"] = $meta_row["meta_value"];
+
+        if ( empty( $users ) ) {
+            global $wpdb;
+            $user_data = $wpdb->get_results( $wpdb->prepare( "
+                SELECT users.ID,
+                    users.display_name,
+                    count(pm.post_id) as number_assigned_to,
+                    count(active.post_id) as number_active,
+                    count(new_assigned.post_id) as number_new_assigned,
+                    count(update_needed.post_id) as number_update,
+                    um.meta_value as roles
+                from $wpdb->users as users
+                INNER JOIN $wpdb->usermeta as um on ( um.user_id = users.ID AND um.meta_key = %s )
+                LEFT JOIN $wpdb->postmeta as pm on ( pm.meta_key = 'assigned_to' and pm.meta_value = CONCAT( 'user-', users.ID ) AND pm.post_id NOT IN (
+                    SELECT post_id
+                    FROM $wpdb->postmeta
+                    WHERE meta_key = 'type' AND meta_value = 'user'
+                    GROUP BY post_id
+                ))
+                LEFT JOIN $wpdb->posts as p on ( p.ID = pm.post_id and p.post_type = 'contacts' )
+                LEFT JOIN $wpdb->postmeta as active on (active.post_id = p.ID and active.meta_key = 'overall_status' and active.meta_value = 'active' )
+                LEFT JOIN $wpdb->postmeta as new_assigned on (new_assigned.post_id = p.ID and new_assigned.meta_key = 'overall_status' and new_assigned.meta_value = 'assigned' )
+                LEFT JOIN $wpdb->postmeta as update_needed on (update_needed.post_id = p.ID and update_needed.meta_key = 'requires_update' and update_needed.meta_value = '1' )
+                GROUP by users.ID, um.meta_value
+            ", $wpdb->prefix . 'capabilities' ),
+            ARRAY_A );
+
+            $users = [];
+            foreach ( $user_data as $user ) {
+                $users[ $user["ID"] ] = $user;
+            }
+            $user_statuses = $wpdb->get_results( $wpdb->prepare( "
+                SELECT * FROM $wpdb->usermeta
+                WHERE meta_key = %s
+            ", $wpdb->prefix . 'user_status' ), ARRAY_A );
+            foreach ( $user_statuses as $meta_row ){
+                if ( isset( $users[ $meta_row["user_id"] ] ) ) {
+                    $users[$meta_row["user_id"]]["user_status"] = $meta_row["meta_value"];
+                }
+            }
+            $user_workloads = $wpdb->get_results( $wpdb->prepare( "
+                SELECT * FROM $wpdb->usermeta
+                WHERE meta_key = %s
+            ", $wpdb->prefix . 'workload_status' ), ARRAY_A );
+            foreach ( $user_workloads as $meta_row ){
+                if ( isset( $users[ $meta_row["user_id"] ] ) ) {
+                    $users[$meta_row["user_id"]]["workload_status"] = $meta_row["meta_value"];
+                }
+            }
+
+
+            $last_activity = $wpdb->get_results( "
+                SELECT user_id,
+                    MAX(hist_time) as last_activity
+                from $wpdb->dt_activity_log as log
+                GROUP by user_id",
+            ARRAY_A);
+            foreach ( $last_activity as $a ){
+                if ( isset( $users[ $a["user_id"] ] ) ) {
+                    $users[$a["user_id"]]["last_activity"] = $a["last_activity"];
+                }
+            }
+
+            if ( !empty( $users ) ){
+                set_transient( 'dispatcher_user_data', maybe_serialize( $users ), 60 * 60 * 24 );
             }
         }
-        $user_workloads = $wpdb->get_results( $wpdb->prepare( "
-            SELECT * FROM $wpdb->usermeta
-            WHERE meta_key = %s
-        ", $wpdb->prefix . 'workload_status' ), ARRAY_A );
-        foreach ( $user_workloads as $meta_row ){
-            if ( isset( $users[ $meta_row["user_id"] ] ) ) {
-                $users[$meta_row["user_id"]]["workload_status"] = $meta_row["meta_value"];
+        if ( current_user_can( "list_users" ) ) {
+            return $users;
+        } else {
+            $multipliers = [];
+            foreach ( $users as $user_id => $user ) {
+                $user_roles = maybe_unserialize( $user["roles"] );
+                if ( in_array( "multiplier", $user_roles ) ){
+                    unset( $user["roles"] );
+                    $multipliers[$user_id] = $user;
+                }
             }
+            return $multipliers;
         }
 
-
-        $last_activity = $wpdb->get_results( "
-            SELECT user_id,
-                MAX(hist_time) as last_activity
-            from $wpdb->dt_activity_log as log
-            GROUP by user_id",
-        ARRAY_A);
-        foreach ( $last_activity as $a ){
-            if ( isset( $users[ $a["user_id"] ] ) ) {
-                $users[$a["user_id"]]["last_activity"] = $a["last_activity"];
-            }
-        }
-
-        if ( !empty( $users ) ){
-            set_transient( 'dispatcher_user_data', maybe_serialize( $users ), 60 * 60 * 24 );
-        }
-
-        return $users;
     }
 
     public function update_settings_on_user( WP_REST_Request $request ){
@@ -353,6 +381,9 @@ class DT_Dispatcher_Endpoints
             $user = get_user_by( "ID", $get_params["user"] );
             if ( !$user ){
                 return new WP_Error( "user_id", "User does not exist", [ 'status' => 400 ] );
+            }
+            if ( empty( $user->caps ) ) {
+                return new WP_Error( "user_id", "Cannot update this user", [ 'status' => 400 ] );
             }
             if ( !empty( $body["user_status"] ) ) {
                 update_user_option( $user->ID, 'user_status', $body["user_status"] );
@@ -379,11 +410,11 @@ class DT_Dispatcher_Endpoints
 
                     $dates_unavailable[] = [
                         "id" => $max_id + 1,
-                        "start_date" => $body["add_unavailability"]["start_date"],
-                        "end_date" => $body["add_unavailability"]["end_date"],
+                        "start_date" => strtotime( $body["add_unavailability"]["start_date"] ),
+                        "end_date" => strtotime( $body["add_unavailability"]["end_date"] ),
                     ];
                     update_user_option( $user->ID, "user_dates_unavailable", $dates_unavailable );
-                    return $dates_unavailable;
+                    return $this->get_dt_user( $user->ID );
                 }
             }
             if ( !empty( $body["remove_unavailability"] ) ) {
@@ -397,7 +428,62 @@ class DT_Dispatcher_Endpoints
                 update_user_option( $user->ID, "user_dates_unavailable", $dates_unavailable );
                 return $dates_unavailable;
             }
+            if ( isset( $body["save_roles"] ) ){
+                // If the current user can't promote users or edit this particular user, bail.
+                if ( !current_user_can( 'promote_users' ) ) {
+                    return false;
+                }
+
+                // Create a new user object.
+                $u = new WP_User( $user->ID );
+
+                // If we have an array of roles.
+                if ( ! empty( $body['save_roles'] ) ) {
+
+                    // Get the current user roles.
+                    $old_roles = (array) $u->roles;
+
+                    // Sanitize the posted roles.
+                    $new_roles = array_map( 'dt_multi_role_sanitize_role', array_map( 'sanitize_text_field', wp_unslash( $body['save_roles'] ) ) );
+
+                    // Loop through the posted roles.
+                    foreach ( $new_roles as $new_role ) {
+
+                        // If the user doesn't already have the role, add it.
+                        if ( dt_multi_role_is_role_editable( $new_role ) && ! in_array( $new_role, (array) $user->roles ) ) {
+                            if ( $new_role !== "administrator" ){
+                                $u->add_role( $new_role );
+                            }
+                        }
+                    }
+
+                    // Loop through the current user roles.
+                    foreach ( $old_roles as $old_role ) {
+
+                        // If the role is editable and not in the new roles array, remove it.
+                        if ( dt_multi_role_is_role_editable( $old_role ) && ! in_array( $old_role, $new_roles ) ) {
+                            if ( $old_role !== "administrator" ) {
+                                $u->remove_role( $old_role );
+                            }
+                        }
+                    }
+
+                    // If the posted roles are empty.
+                } else {
+
+                    // Loop through the current user roles.
+                    foreach ( (array) $u->roles as $old_role ) {
+
+                        // Remove the role if it is editable.
+                        if ( dt_multi_role_is_role_editable( $old_role ) ) {
+                            $u->remove_role( $old_role );
+                        }
+                    }
+                }
+                return $this->get_dt_user( $user->ID );
+            }
         }
+        return false;
     }
 
     public static function get_dash_stats(){

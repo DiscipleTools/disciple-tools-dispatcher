@@ -14,16 +14,22 @@ jQuery(document).ready(function($) {
   function multipliers_js(){
     let multipliers_table = $('#multipliers_table').DataTable({
       "paging":   false,
-      "order": [[ 0, "asc" ]],
+      "order": [[ 1, "asc" ]],
       "aoColumns": [
         { "orderSequence": [ "asc", "desc" ] },
+        { "orderSequence": [ "asc", "desc" ] },
         { "orderSequence": [ "desc", "asc" ] },
         { "orderSequence": [ "desc", "asc" ] },
         { "orderSequence": [ "desc", "asc" ] },
         { "orderSequence": [ "desc", "asc" ] },
         { "orderSequence": [ "desc", "asc" ] },
         { "orderSequence": [ "asc", "desc" ] },
-      ]
+      ],
+      columnDefs: [ {
+          sortable: false,
+          "class": "index",
+          targets: 0
+      } ],
     });
 
     multipliers_table.columns( '.select-filter' ).every( function () {
@@ -48,6 +54,11 @@ jQuery(document).ready(function($) {
           select.append( $('<option value="'+d+'">'+d+'</option>') );
         } );
     } );
+    multipliers_table.on( 'order.dt search.dt', function () {
+        multipliers_table.column(0, {search:'applied', order:'applied'}).nodes().each( function (cell, i) {
+            cell.innerHTML = i+1 + '.';
+        } );
+    } ).draw();
 
     let user_id = 0;
     let open_multiplier_modal = (user_id)=>{
@@ -161,11 +172,13 @@ jQuery(document).ready(function($) {
           let activity_html = ``;
           response.user_activity.forEach((a)=>{
             activity_html += `<div>
-          <strong>${moment.unix(a.hist_time).format('YYYY-MM-DD')}</strong>
-          ${a.object_note}
-        </div>`
+              <strong>${moment.unix(a.hist_time).format('YYYY-MM-DD')}</strong>
+              ${a.object_note}
+            </div>`
           })
           activity_div.html(activity_html)
+
+          setup_user_roles(response);
         })
     }
 
@@ -205,34 +218,52 @@ jQuery(document).ready(function($) {
     /**
      * Set availability dates
      */
-    let dateFields = [ "start_date", "end_date" ]
-    dateFields.forEach(key=>{
-      let datePicker = $(`#${key}.date-picker`)
-      datePicker.datepicker({
-        onSelect: function (date) {
-          let start_date = $('#start_date').val()
-          let end_date = $('#end_date').val()
-          if ( start_date && end_date ){
-            $('#add_unavailable_dates').removeAttr("disabled");
-          }
-        },
-        dateFormat: 'yy-mm-dd',
-        changeMonth: true,
-        changeYear: true
-      })
-
-    })
-    $('#add_unavailable_dates').on('click', function () {
-      let start_date = $('#start_date').val()
-      let end_date = $('#end_date').val()
+    let unavailable_dates_picker = $('#date_range')
+    unavailable_dates_picker.daterangepicker({
+      "singleDatePicker": false,
+       autoUpdateInput: false,
+      "locale": {
+        "format": "YYYY/MM/DD",
+        "separator": " - ",
+        "daysOfWeek": window.wpApiShare.translations.days_of_the_week,
+        "monthNames": window.wpApiShare.translations.month_labels,
+      },
+      "firstDay": 1,
+      "opens": "center",
+      "drops": "down"
+    }).on('apply.daterangepicker', function (ev, picker) {
+      $(this).val(picker.startDate.format('YYYY/MM/DD') + ' - ' + picker.endDate.format('YYYY/MM/DD'));
+      let start_date = picker.startDate.format('YYYY/MM/DD')
+      let end_date = picker.endDate.format('YYYY/MM/DD')
       $('#add_unavailable_dates_spinner').addClass('active')
       update_user( user_id, 'add_unavailability', {start_date, end_date}).then((resp)=>{
         $('#add_unavailable_dates_spinner').removeClass('active')
-        $('#start_date').val('')
-        $('#end_date').val('')
-        display_dates_unavailable(resp)
+        unavailable_dates_picker.val('');
+        display_dates_unavailable(resp.dates_unavailable)
       })
     })
+
+    function setup_user_roles(user_data){
+      if ( user_data.roles ){
+        _.forOwn( user_data.roles, role=>{
+          $(`#user_roles_list [value="${role}"]`).prop('checked', true)
+        } )
+      }
+    }
+    $('#save_roles').on("click", function () {
+      $(this).toggleClass('loading', true)
+      let roles = [];
+      $('#user_roles_list input:checked').each(function () {
+        roles.push($(this).val())
+      })
+      update_user( user_id, 'save_roles', roles).then(()=>{
+        $(this).toggleClass('loading', false)
+      }).catch(()=>{
+        $(this).toggleClass('loading', false)
+      })
+
+    })
+
     let display_dates_unavailable = (list = [] )=>{
       let date_unavailable_table = $('#unavailable-list')
       date_unavailable_table.empty()

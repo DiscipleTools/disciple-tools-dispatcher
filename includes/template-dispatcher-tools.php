@@ -47,12 +47,17 @@ $dt_url_path = dt_get_url_path();
                     <div id="chart">
                     <?php if ( strpos( $dt_url_path, 'dispatcher-tools/multipliers' ) !== false ) :
                         $users = DT_Dispatcher_Endpoints::get_users(); ?>
-                        <h3>Multipliers</h3>
+                        <?php if ( current_user_can( "list_users" ) ) :?>
+                            <h3>Users</h3>
+                        <?php else : ?>
+                            <h3>Multipliers</h3>
+                        <?php endif; ?>
                         <p><a href="#" id="refresh_cached_data">Refresh cached data</a><span id="loading-page" class="loading-spinner"></span></p>
                         <div style="display: inline-block" class="loading-spinner users-spinner"></div>
                         <table id="multipliers_table" class="display">
                             <thead>
                                 <tr>
+                                    <th></th>
                                     <th>Display Name</th>
                                     <th class="select-filter">Status</th>
                                     <th class="select-filter">Workload</th>
@@ -65,8 +70,10 @@ $dt_url_path = dt_get_url_path();
                             <tbody>
                             <?php
                             $workload_status_options = dt_get_site_custom_lists()["user_workload_status"] ?? [];
+                            $index = 0;
                             foreach ( $users as $user_i => $user ) : ?>
                             <tr class="user_row" style="cursor: pointer"data-user="<?php echo esc_html( $user["ID"] ) ?>">
+                                <td></td>
                                 <td data-user="<?php echo esc_html( $user["ID"] ) ?>"><?php echo esc_html( $user["display_name"] ) ?></td>
                                 <td><?php echo esc_html( $user["user_status"] ?? "" ) ?></td>
                                 <td><?php echo esc_html( isset( $user["workload_status"], $workload_status_options[ $user["workload_status"] ] ) ? $workload_status_options[ $user["workload_status"] ]["label"] : "" ) ?></td>
@@ -263,6 +270,39 @@ $dt_url_path = dt_get_url_path();
                                 <?php endforeach; ?>
                             </select>
                         </div>
+
+
+
+                        <!-- roles -->
+                        <?php if ( current_user_can( "promote_users" ) ) : ?>
+                        <div class="bordered-box">
+                            <h3><?php esc_html_e( 'Roles', 'disciple_tools' ); ?></h3>
+                            <?php
+                            $user_roles = [];
+
+                            $dt_roles = dt_multi_role_get_editable_role_names();
+                            ?>
+
+                            <p>For a description of each of the roles, please see the <a href="https://disciple-tools.readthedocs.io/en/latest/Disciple_Tools_Theme/getting_started/roles.html" target="_blank">Roles Documentation</a>  </p>
+
+                            <ul id="user_roles_list" class="no-bullet">
+                            <?php foreach ( $dt_roles as $role_key => $name ) : ?>
+                                <li>
+                                    <label style="color:<?php echo esc_html( $role_key === 'administrator' ? 'grey' : 'inherit' ); ?>">
+                                        <input type="checkbox" name="dt_multi_role_user_roles[]"
+                                               value="<?php echo esc_attr( $role_key ); ?>"
+                                               <?php checked( in_array( $role_key, $user_roles ) ); ?>
+                                               <?php disabled( $role_key === 'administrator' ); ?> />
+                                        <?php echo esc_html( $name ); ?>
+                                    </label>
+                                </li>
+                            <?php endforeach; ?>
+                            </ul>
+                            <button class="button loader" id="save_roles"><?php esc_html_e( 'Save Roles', 'disciple_tools' ); ?></button>
+                        </div>
+                        <?php endif; ?>
+
+                        <!-- locations -->
                         <div class="bordered-box">
                         <h3>Locations the multiplier is responsible for</h3>
                         <div class="location_grid">
@@ -283,21 +323,15 @@ $dt_url_path = dt_get_url_path();
                         <div class="bordered-box">
                             <h3><?php esc_html_e( "Availability", 'disciple_tools' ) ?></h3>
                             <p><?php esc_html_e( "Set the dates you will be unavailable so the Dispatcher will know your availability to receive new contacts", 'disciple_tools' ) ?></p>
-                            <div style="display: flex; justify-content: space-around; align-items: flex-end">
-                                <div style="flex-shrink: 1">
+                            <div style="display: flex; align-items: center">
+                                <div>
+                                    <strong>Add dates unavailable:</strong>
+                                </div>
+                                <div style="flex-shrink: 1; margin: 0 10px">
                                     <div class="section-subheader cell">
-                                        <?php esc_html_e( 'Start Date', 'disciple_tools' )?>
+                                        <?php esc_html_e( 'Start and end date', 'disciple_tools' )?>
                                     </div>
-                                    <div class="start_date"><input type="text" class="date-picker" id="start_date"></div>
-                                </div>
-                                <div>
-                                <div class="section-subheader cell">
-                                    <?php esc_html_e( 'End Date', 'disciple_tools' )?>
-                                </div>
-                                <div class="end_date"><input type="text" class="date-picker" id="end_date"></div>
-                                </div>
-                                <div>
-                                    <button id="add_unavailable_dates" class="button" disabled><?php esc_html_e( "Add Unavailable dates", 'disciple_tools' ) ?></button>
+                                    <div class="date_range"><input type="text" class="date-picker" id="date_range" autocomplete="off"></div>
                                     <div id="add_unavailable_dates_spinner" style="display: inline-block" class="loading-spinner"></div>
                                 </div>
 
