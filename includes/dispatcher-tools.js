@@ -179,6 +179,8 @@ jQuery(document).ready(function($) {
           activity_div.html(activity_html)
 
           setup_user_roles(response);
+        }).catch(()=>{
+           $('#user_modal').foundation('close');
         })
     }
 

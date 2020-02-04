@@ -64,6 +64,9 @@ class DT_Dispatcher_Endpoints
     public function get_dt_user( $user_id ) {
         global $wpdb;
         $user = get_user_by( "ID", $user_id );
+        if ( empty( $user->caps ) ) {
+            return new WP_Error( "user_id", "Cannot get this user", [ 'status' => 400 ] );
+        }
 
         $user_status = get_user_option( 'user_status', $user->ID );
         $workload_status = get_user_option( 'workload_status', $user->ID );
