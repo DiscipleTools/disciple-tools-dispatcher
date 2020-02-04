@@ -55,7 +55,7 @@ $dt_dispatcher_tools_required_dt_theme_version = '0.19.0';
  *
  * @since  0.1
  * @access public
- * @return object
+ * @return object|bool
  */
 function dt_dispatcher_tools() {
     global $dt_dispatcher_tools_required_dt_theme_version;
@@ -65,9 +65,12 @@ function dt_dispatcher_tools() {
      * Check if the Disciple.Tools theme is loaded and is the latest required version
      */
     if ( 'disciple-tools-theme' !== $wp_theme->get_template() || $version < $dt_dispatcher_tools_required_dt_theme_version ) {
-        add_action( 'admin_notices', 'dt_dispatcher_tools_hook_admin_notice' );
-        add_action( 'wp_ajax_dismissed_notice_handler', 'dt_hook_ajax_notice_handler' );
-        return new WP_Error( 'current_theme_not_dt', 'Disciple Tools Theme not active or not latest version.' );
+        if ( ! is_multisite() ) {
+            add_action('admin_notices', 'dt_dispatcher_tools_hook_admin_notice');
+            add_action('wp_ajax_dismissed_notice_handler', 'dt_hook_ajax_notice_handler');
+        }
+
+        return false;
     }
     /**
      * Load useful function from the theme
