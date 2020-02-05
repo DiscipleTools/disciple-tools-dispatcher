@@ -133,22 +133,27 @@ $dt_url_path = dt_get_url_path();
                         <h3 class="section-header"><?php esc_html_e( "Contacts assigned to multipliers", 'disciple_tools' ) ?></h3>
                         <div class="center callout">
                             <div class="grid-x">
-                                <div class="medium-3 cell center">
+                                <div class="auto cell center">
                                     <h5><?php esc_html_e( "All Time", 'disciple_tools' ) ?><br>
                                         <?php echo esc_html( $dash_stats["assigned_counts"]["all_time"] ?? 0 ) ?>
                                     </h5>
                                 </div>
-                                <div class="medium-3 cell center left-border-grey">
+                                <div class="auto cell center left-border-grey">
+                                    <h5><?php esc_html_e( "Last Year", 'disciple_tools' ) ?><br>
+                                        <?php echo esc_html( $dash_stats["assigned_counts"]["last_year"] ?? 0 ) ?>
+                                    </h5>
+                                </div>
+                                <div class="auto cell center left-border-grey">
                                     <h5><?php esc_html_e( "This Year", 'disciple_tools' ) ?><br>
                                         <?php echo esc_html( $dash_stats["assigned_counts"]["this_year"] ?? 0 ) ?>
                                     </h5>
                                 </div>
-                                <div class="medium-3 cell center left-border-grey">
+                                <div class="auto cell center left-border-grey">
                                     <h5><?php esc_html_e( "Last Month", 'disciple_tools' ) ?><br>
                                         <?php echo esc_html( $dash_stats["assigned_counts"]["last_month"] ?? 0 ) ?>
                                     </h5>
                                 </div>
-                                <div class="medium-3 cell center left-border-grey">
+                                <div class="auto cell center left-border-grey">
                                     <h5><?php esc_html_e( "This Month", 'disciple_tools' ) ?><br>
                                         <?php echo esc_html( $dash_stats["assigned_counts"]["this_month"] ?? 0 ) ?>
                                     </h5>
@@ -240,7 +245,7 @@ $dt_url_path = dt_get_url_path();
                             <li>This month: <span id="assigned_this_month"></span></li>
                             <li>Last month: <span id="assigned_last_month"></span></li>
                             <li>This year: <span id="assigned_this_year"></span></li>
-                            <li>Last year: <span id="assigned_all_time"></span></li>
+                            <li>All time: <span id="assigned_all_time"></span></li>
                         </ul>
                     </div>
 

@@ -436,7 +436,7 @@ jQuery(document).ready(function($) {
     pieSeries.dataFields.value = "count";
     pieSeries.dataFields.category = "status";
     pieSeries.slices.template.states.getKey("active").properties.shiftRadius = 0;
-    //pieSeries.labels.template.text = "{category}\n{value.percent.formatNumber('#.#')}%";
+    pieSeries.labels.template.text = "{category}: {value.percent.formatNumber('#.#')}% ({value}) ";
 
     pieSeries.slices.template.events.on("hit", function(event) {
       selectSlice(event.target.dataItem);
@@ -446,14 +446,11 @@ jQuery(document).ready(function($) {
     chart2.width = am4core.percent(30);
     chart2.radius = am4core.percent(80);
 
-// Add and configure Series
+    // Add and configure Series
     let pieSeries2 = chart2.series.push(new am4charts.PieSeries());
     pieSeries2.dataFields.value = "count";
     pieSeries2.dataFields.category = "reason";
     pieSeries2.slices.template.states.getKey("active").properties.shiftRadius = 0;
-//pieSeries2.labels.template.radius = am4core.percent(50);
-//pieSeries2.labels.template.inside = true;
-//pieSeries2.labels.template.fill = am4core.color("#ffffff");
     pieSeries2.labels.template.disabled = true;
     pieSeries2.ticks.template.disabled = true;
     pieSeries2.alignLabels = false;
@@ -477,18 +474,13 @@ jQuery(document).ready(function($) {
 
     function selectSlice(dataItem) {
       selectedSlice = dataItem.slice;
-
       let fill = selectedSlice.fill;
-
       let count = dataItem.dataContext.reasons.length;
       pieSeries2.colors.list = [];
       for (let i = 0; i < count; i++) {
         pieSeries2.colors.list.push(fill.brighten(i * 2 / count));
       }
-
       chart2.data = dataItem.dataContext.reasons;
-
-
       pieSeries2.appear();
 
       let middleAngle = selectedSlice.middleAngle;
@@ -498,8 +490,6 @@ jQuery(document).ready(function($) {
 
       selectedSlice.events.on("transformed", updateLines);
 
-//  let animation = chart2.animate({property:"dx", from:-container.pixelWidth / 2, to:0}, 2000, am4core.ease.elasticOut)
-//  animation.events.on("animationprogress", updateLines)
     }
 
 
